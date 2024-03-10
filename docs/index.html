@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>レポっと Archives</title>
+<!-- Reset CSS -->
+<link rel="stylesheet" href="https://unpkg.com/modern-css-reset/dist/reset.min.css" />
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<!-- Leaflet.MarkerCluster -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<!-- Lazyload -->
+<script src="https://cdn.jsdelivr.net/npm/lazyload@2.0.0-rc.2/lazyload.js"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+<div id="app">
+<div class="side-nav">
+  <header>
+    <h1><span>レポっと Archives</span></h1>
+  </header>
+  <div>
+    <h2>ハッシュタグ</h2>
+    <ul>
+      <li v-for="(h, id) in hashtag.list" @click="setHashtag(id)" :class="{active: hashtag==id}">${ h.name }</li>
+    </ul>
+  </div>
+  <footer>
+    <p>© repot.iopt.jp</p>
+  </footer>
+</div>
+<div id="map" class="map"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
+<script src="data/archives.js" type="text/javascript" charset="UTF-8"></script>
+<script src="static/js/main.js" type="text/javascript" charset="UTF-8"></script>
+</body>
+</html>

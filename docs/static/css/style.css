@@ -1,0 +1,134 @@
+html, body {
+  color: #333;
+  font-size: 14px;
+}
+
+.side-nav {
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  background: white;
+  box-shadow: 1px 1px 3px 0 rgba(0, 0, 0, 0.4);
+}
+
+.side-nav h1 {
+  width: 150px;
+  height: 135px;
+  margin: 15px;
+  background: white url('../img/archives-logo.png') center center/100% 100% no-repeat;
+  aspect-ratio: 10/9;
+}
+
+.side-nav h1 span {
+  display: none;
+}
+
+.side-nav > div {
+  padding: 20px 0;
+}
+
+.side-nav h2 {
+  font-size: 1rem;
+  text-align: center;
+  padding: 8px 0;
+  background: #eee;
+}
+
+.side-nav ul {
+  padding: 5px 0;
+  margin: 0;
+}
+
+.side-nav ul li {
+  position: relative;
+  list-style: none;
+  padding: 8px 12px;
+  border: 1px solid #eee;
+  border-width: 0 0 1px 0;
+}
+
+.side-nav ul li:hover {
+  cursor: pointer;
+  background: #09c;
+  color: white;
+}
+
+.side-nav ul li:before {
+  position: relative;
+  top: 2px;
+  padding-right: 3px;
+  content: "tag";
+  font-family: 'Material Icons Round';
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  text-align: center;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.side-nav ul li.active {
+  background: #ee3333;
+  color: white;
+}
+
+.side-nav ul li.active:after {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  content: "double_arrow";
+  font-family: 'Material Icons Round';
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  text-align: center;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  font-size: 16px;
+}
+
+.side-nav footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 20px 0;
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+.map {
+  position: fixed;
+  z-index: 0;
+  top: 0;
+  left: 180px;
+  height: 100vh;
+  width: 100vw;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 10px;
+}
+.leaflet-popup-content {
+  margin: 1px;
+  width: 200px;
+}
+.leaflet-popup-content img {
+  border-radius: 8px;
+}
+.leaflet-popup-close-button {
+  color: white!important;
+}
