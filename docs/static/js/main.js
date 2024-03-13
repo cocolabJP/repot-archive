@@ -6,6 +6,7 @@ var HASHTAG_LIST = {
   685: {'name': '中四国魚', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
   686: {'name': '釣った場所', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
 };
+const $ = (id) => { return document.getElementById(id); }
 var app = new Vue({
   delimiters: ['${', '}'],
   el: '#app',
@@ -14,33 +15,74 @@ var app = new Vue({
     layer: null,
     hashtag: {
       list: HASHTAG_LIST,
-      target: 0,
+      selected: null,
     },
     archives: archives,
+    view: {
+      wh: 0,
+      ww: 0,
+      mode: 'both',
+      selected: 'map',
+      divideRatio: 0.5,
+      isDragging: false,
+    },
   },
   created: function() {
   },
   mounted: function() {
+    this.updateScreenSize();
+    this.loadPage();
   },
   destroyed: function () {
+    window.removeEventListener('resize', this.updateScreenSize(), false);
   },
   methods: {
-    initMap() {
+    loadPage() {
+      // 画面の向き変更イベントを登録
+      window.addEventListener('resize', this.updateScreenSize);
+      this.showMap();
+    },
+    updateScreenSize() {
+      this.view.wh = window.innerHeight;
+      this.view.ww = window.innerWidth;
+      this.view.mode = (this.view.ww < 1200) ? "single" : "both";
+      if(this.map) { this.map.invalidateSize(); }
+    },
+    startDragDivider(e) {
+      this.view.isDragging = true;
+    },
+    onDragDivider(e) {
+      if(this.view.isDragging) {
+        let r = (e.pageX - 180) / (this.view.ww - 180);
+        this.view.divideRatio = Math.max(0.2, Math.min(r, 0.8));
+      }
+    },
+    stopDragDivider(e) {
+      this.view.isDragging = false;
+      if(this.map) { this.map.invalidateSize(); }
+    },
+    showAboutDialog() {
+      $("about").showModal();
+    },
+    dismissAboutDialog() {
+      $("about").close();
+    },
+    showMap() {
       setTimeout(() => {
         this.map = L.map('map', {
           center: [34.73177572534839, 135.73429797376784],
           zoom: 10,
           zoomControl: true,
           minZoom: 0,
-          maxZoom: 19,
+          maxZoom: 18,
           dragging: true,
           scrollWheelZoom: 'center',
           doubleClickZoom: 'center',
           touchZoom:       'center',
         });
         L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', {
-            attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a>',
-            maxZoom: 19,
+          attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a>',
+          maxZoom: 19,
         }).addTo(this.map);
         this.map.on('popupopen', function(e) {
           console.log("lazyload");
@@ -78,6 +120,10 @@ var app = new Vue({
     },
   },
   computed: {
+    isBothMode: function() { return this.view.mode == 'both'; },
+    isMapMode:  function() { return this.isBothMode || this.view.selected == 'map';  },
+    isListMode: function() { return this.isBothMode || this.view.selected == 'list'; },
+    mapWidth:   function() { return this.isBothMode ? ((this.view.ww - 180) * this.view.divideRatio) + 'px' : '100%'; },
+    listWidth:  function() { return this.isBothMode ? ((this.view.ww - 180) * (1 - this.view.divideRatio)) + 'px' : '100%'; },
   }
 });
-app.initMap();

@@ -27,15 +27,51 @@
   </header>
   <div>
     <h2>ハッシュタグ</h2>
-    <ul>
-      <li v-for="(h, id) in hashtag.list" @click="setHashtag(id)" :class="{active: hashtag==id}">${ h.name }</li>
+    <ul class="hashtags">
+      <li v-for="(h, id) in hashtag.list" @click="setHashtag(id)" :class="{active: hashtag.selected==id}" class="ic">${ h.name }</li>
     </ul>
   </div>
   <footer>
+    <ul>
+      <li @click="showAboutDialog();">このシステムについて</li>
+    </ul>
     <p>© repot.iopt.jp</p>
   </footer>
 </div>
-<div id="map" class="map"></div>
+<div class="main"
+     @mousemove="onDragDivider($event)"
+     @mouseup="stopDragDivider($event)">
+  <div v-if="isMapMode" class="map-view"
+       :style="{width: mapWidth}">
+    <div id="map" class="map"></div>
+    <div class="summary" v-if="hashtag.selected != null">
+      <h2 class="ic">${ hashtag.list[hashtag.selected].name }</h2>
+      <p>レポっと数： ${ archives[hashtag.selected].length }</p>
+    </div>
+  </div>
+  <div v-if="isListMode" class="list-view"
+       :style="{width: listWidth}">
+    <div v-if="isBothMode" class="view-divider"
+         @mousedown="startDragDivider($event)"></div>
+    <ul>
+      <li v-for="(a, id) in archives[hashtag.selected]">${ a }</li>
+    </ul>
+  </div>
+</div>
+<dialog id="about" @click.stop="dismissAboutDialog();">
+  <article @click.stop="">
+    <header>
+      <h1>レポっとアーカイブについて</h1>
+      <span @click.stop="dismissAboutDialog();" class="ic">閉じる</span>
+    </header>
+    <div>
+      <h2>使用しているライブラリ</h2>
+      <ul>
+        <li><a href="https://leafletjs.com/">Leaflet.js</a></li>
+      </ul>
+    </div>
+  </article>
+</dialog>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
 <script src="data/archives.js" type="text/javascript" charset="UTF-8"></script>
