@@ -93,6 +93,7 @@ var app = new Vue({
     setHashtag(hashtag) {
       this.hashtag.selected = hashtag;
       this.putMarkers();
+      setTimeout(() => lazyload(), 500);
     },
     putMarkers() {
       if(this.layer != null) {
@@ -102,7 +103,6 @@ var app = new Vue({
       this.layer = L.layerGroup();
       for(let i=0; i<tgtArchive.length; i++) {
         let tgtHashtag = this.hashtag.list[this.hashtag.selected];
-        console.log(tgtArchive[i]);
         this.layer.addLayer(
           L.marker([tgtArchive[i].location_lat, tgtArchive[i].location_lng], {
             icon: L.icon({
