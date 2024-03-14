@@ -53,8 +53,13 @@
        :style="{width: listWidth}">
     <div v-if="isBothMode" class="view-divider"
          @mousedown="startDragDivider($event)"></div>
-    <ul>
-      <li v-for="(a, id) in archives[hashtag.selected]"><img class="lazyload" src="static/img/loading-photo.png" :data-src="THUMB_URL_BASE + a.filename"></li>
+    <ul id="list">
+      <li v-for="(repot, id) in archives[hashtag.selected]"
+          :id="'list-' + repot.id">
+        <img class="lazyload" src="static/img/loading-photo.png"
+             :data-src="THUMB_URL_BASE + repot.filename"
+             @click="showInMap(repot.id)">
+      </li>
     </ul>
   </div>
 </div>

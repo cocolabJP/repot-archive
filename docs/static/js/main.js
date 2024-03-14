@@ -85,7 +85,6 @@ var app = new Vue({
           maxZoom: 19,
         }).addTo(this.map);
         this.map.on('popupopen', function(e) {
-          console.log("lazyload");
           lazyload();
         });
       }, 500);
@@ -109,14 +108,24 @@ var app = new Vue({
                 iconUrl: 'static/img/icon/' + tgtHashtag.icon.name + '.svg',
                 iconSize: tgtHashtag.icon.size,
                 iconAnchor: tgtHashtag.icon.anchor,
-            })
+            }),
+            repotID: tgtArchive[i].id,
           }).bindPopup(L.popup({
             'content': '<img class="lazyload" src="static/img/loading-photo.png" data-src="' + THUMB_URL_BASE + tgtArchive[i].filename + '">',
             'offset': tgtHashtag.icon.popup,
-          }))
+          })).on('click', (e) => {
+            this.showInList(e.target.options.repotID);
+          })
         );
       }
       this.map.addLayer(this.layer)
+    },
+    showInMap(repotID) {
+      
+    },
+    showInList(repotID) {
+      let y = $("list-" + repotID).offsetTop;
+      $("list").scrollTo({top: y-70, behavior: 'smooth'});
     },
   },
   computed: {
