@@ -185,6 +185,7 @@ html, body {
   list-style: none;
   padding: 5px;
   width: 100%;
+  aspect-ratio: 16/9;
 }
 .list-view ul li img {
   width: 100%;
