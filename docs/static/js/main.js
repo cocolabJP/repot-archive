@@ -13,6 +13,7 @@ var app = new Vue({
   data: {
     map: null,
     layer: null,
+    markers: {},
     hashtag: {
       list: HASHTAG_LIST,
       selected: null,
@@ -100,33 +101,43 @@ var app = new Vue({
       }
       let tgtArchive = this.archives[this.hashtag.selected];
       this.layer = L.layerGroup();
+      this.markers = {};
       for(let i=0; i<tgtArchive.length; i++) {
         let tgtHashtag = this.hashtag.list[this.hashtag.selected];
-        this.layer.addLayer(
-          L.marker([tgtArchive[i].location_lat, tgtArchive[i].location_lng], {
-            icon: L.icon({
-                iconUrl: 'static/img/icon/' + tgtHashtag.icon.name + '.svg',
-                iconSize: tgtHashtag.icon.size,
-                iconAnchor: tgtHashtag.icon.anchor,
-            }),
-            repotID: tgtArchive[i].id,
-          }).bindPopup(L.popup({
-            'content': '<img class="lazyload" src="static/img/loading-photo.png" data-src="' + THUMB_URL_BASE + tgtArchive[i].filename + '">',
-            'offset': tgtHashtag.icon.popup,
-          })).on('click', (e) => {
-            this.showInList(e.target.options.repotID);
-          })
-        );
+        let m = L.marker([tgtArchive[i].location_lat, tgtArchive[i].location_lng], {
+                  icon: L.icon({
+                      iconUrl: 'static/img/icon/' + tgtHashtag.icon.name + '.svg',
+                      iconSize: tgtHashtag.icon.size,
+                      iconAnchor: tgtHashtag.icon.anchor,
+                  }),
+                  repotID: tgtArchive[i].id,
+                }).bindPopup(L.popup({
+                  'content': '<img class="lazyload" src="static/img/loading-photo.png" data-src="' + THUMB_URL_BASE + tgtArchive[i].filename + '">',
+                  'offset': tgtHashtag.icon.popup,
+                })).on('click', (e) => {
+                  this.showInList(e.target.options.repotID);
+                });
+        this.markers[tgtArchive[i].id] = m;
+        this.layer.addLayer(m);
       }
       this.map.addLayer(this.layer)
     },
     showInMap(repotID) {
-      
+      this.map.panTo(new L.LatLng(this.markers[repotID].getLatLng().lat, this.markers[repotID].getLatLng().lng));
+      this.markers[repotID].fire('click');
     },
     showInList(repotID) {
       let y = $("list-" + repotID).offsetTop;
       $("list").scrollTo({top: y-70, behavior: 'smooth'});
     },
+    getDatetimeStr(timestamp) {
+      let dt = new Date(timestamp * 1000);
+      return dt.getFullYear() + "/"
+           + ("0" + dt.getMonth()).slice(-2) + "/"
+           + ("0" + dt.getDate()).slice(-2)  + " "
+           + ("0" + dt.getHours()).slice(-2) + ":"
+           + ("0" + dt.getMinutes()).slice(-2);
+    }
   },
   computed: {
     isBothMode: function() { return this.view.mode == 'both'; },

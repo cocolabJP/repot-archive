@@ -59,6 +59,7 @@
         <img class="lazyload" src="static/img/loading-photo.png"
              :data-src="THUMB_URL_BASE + repot.filename"
              @click="showInMap(repot.id)">
+        <time>${ getDatetimeStr(repot.timestamp) }</time>
       </li>
     </ul>
   </div>
