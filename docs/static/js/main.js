@@ -123,7 +123,10 @@ var app = new Vue({
       this.map.addLayer(this.layer)
     },
     showInMap(repotID) {
-      this.map.panTo(new L.LatLng(this.markers[repotID].getLatLng().lat, this.markers[repotID].getLatLng().lng));
+      this.map.flyTo([this.markers[repotID].getLatLng().lat, this.markers[repotID].getLatLng().lng], this.map.getZoom(), {
+        animate: true,
+        duration: 1.5
+      });
       this.markers[repotID].fire('click');
     },
     showInList(repotID) {
