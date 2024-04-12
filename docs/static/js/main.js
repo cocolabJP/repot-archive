@@ -62,6 +62,12 @@ var app = new Vue({
       this.view.isDragging = false;
       if(this.map) { this.map.invalidateSize(); }
     },
+    showLicenseDialog() {
+      $("license").showModal();
+    },
+    dismissLicenseDialog() {
+      $("license").close();
+    },
     showAboutDialog() {
       $("about").showModal();
     },

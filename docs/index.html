@@ -16,6 +16,9 @@
 <!-- Lazyload -->
 <script src="https://cdn.jsdelivr.net/npm/lazyload@2.0.0-rc.2/lazyload.js"></script>
 <!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;600&family=Noto+Serif+JP:wght@300;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 <link rel="stylesheet" href="static/css/style.css">
 </head>
@@ -33,9 +36,10 @@
   </div>
   <footer>
     <ul>
+      <li @click="showLicenseDialog();">データの利用について</li>
       <li @click="showAboutDialog();">このシステムについて</li>
     </ul>
-    <p>© repot.iopt.jp</p>
+    <p class="copyright">&copy; <a href="https://cocolab.jp/">cocolab.jp</a></p>
   </footer>
 </div>
 <div class="main"
@@ -64,6 +68,21 @@
     </ul>
   </div>
 </div>
+<dialog id="license" @click.stop="dismissLicenseDialog();">
+  <article @click.stop="">
+    <header>
+      <h1>データの利用について</h1>
+      <span @click.stop="dismissLicenseDialog();" class="ic">閉じる</span>
+    </header>
+    <div>
+      <h2>ライセンス</h2>
+      <p>
+        レポっとアーカイブで公開されている位置情報付き写真データは、全て<a href="https://www.iopt.jp/repot">レポっと</a>アプリで収集されています。
+        全てのデータは、<a href="https://creativecommons.org/licenses/by/4.0/">クリエイティブ・コモンズ・ライセンス（CC BY 4.0 DEED・表示4.0国際）</a>の元で提供されています。
+      </p>
+    </div>
+  </article>
+</dialog>
 <dialog id="about" @click.stop="dismissAboutDialog();">
   <article @click.stop="">
     <header>
