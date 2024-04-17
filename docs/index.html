@@ -65,6 +65,7 @@
              @click="showInMap(repot.id)">
         <time>${ getDatetimeStr(repot.timestamp) }</time>
       </li>
+      <li class="empty" v-if="hashtag.selected == null"><p>左のメニューから、閲覧したいアーカイブのハッシュタグを選んでください</p></li>
     </ul>
   </div>
 </div>

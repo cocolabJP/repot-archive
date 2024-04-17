@@ -121,7 +121,7 @@ html, body {
 }
 .side-nav footer ul li {
   list-style: none;
-  width: calc(100% - 10px);
+  width: 100%;
   padding: 8px 5px;
 }
 .side-nav footer ul li:hover {
@@ -217,6 +217,22 @@ html, body {
   color: white;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
   font-family: courier;
+}
+.list-view ul li.empty {
+  display: table;
+  text-align: center;
+  width: calc(100% - 8px);
+  height: 200px;
+  background: #eee;
+  border-radius: 10px;
+  padding: 50px;
+}
+.list-view ul li.empty p {
+  display: table-cell;
+  vertical-align: middle;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #999;
 }
 
 .summary {
