@@ -1,6 +1,6 @@
 import pandas as pd
 
-target_hashtags = [479, 685, 686, 702]
+target_hashtags = [479, 702]
 
 json = "var archives = {"
 for h in target_hashtags:
