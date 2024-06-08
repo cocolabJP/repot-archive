@@ -3,6 +3,7 @@ var THUMB_URL_BASE = 'https://d1743dg9i7p6y2.cloudfront.net/photos/';
 var HASHTAG_LIST = {
   479: {'name': '桜咲', 'icon': {'name': 'sakura', 'size': [40, 40], 'anchor': [20, 20], 'popup': [0, 0]}},
   702: {'name': 'pxky', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
+  805: {'name': 'さわのならまち実験', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
   // 685: {'name': '中四国魚', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
   // 686: {'name': '釣った場所', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
 };
