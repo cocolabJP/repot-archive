@@ -311,6 +311,20 @@ dialog article > div {
 dialog article h2 {
   font-size: 1.2rem;
 }
+dialog article p + h2 {
+  margin: 15px 0 0;
+}
+dialog article code {
+  display: block;
+  font-family: Menlo, Monaco, Consolas, monospace;
+  margin: 8px 0 0;
+  padding: 10px 15px;
+  background: #eee;
+  border-radius: 10px;
+}
+dialog article code:not(:last-child) {
+  margin: 8px 0;
+}
 
 dialog article > header span:before {
   content: "close";

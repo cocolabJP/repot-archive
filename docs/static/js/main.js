@@ -4,8 +4,8 @@ var HASHTAG_LIST = {
   479: {'name': '桜咲', 'icon': {'name': 'sakura', 'size': [40, 40], 'anchor': [20, 20], 'popup': [0, 0]}},
   508: {'name': '花咲', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
   700: {'name': 'ご当地グルメ', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
-  702: {'name': 'pxky', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
-  776: {'name': 'オープンデータソフトクリーム', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
+  702: {'name': 'pxky', 'icon': {'name': 'pxky', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
+  776: {'name': 'オープンデータソフトクリーム', 'icon': {'name': 'soft-cream', 'size': [32, 50], 'anchor': [16, 50], 'popup': [0, -25]}},
   805: {'name': 'さわのならまち実験', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
   880: {'name': '郡山桜見守り', 'icon': {'name': 'sakura', 'size': [40, 40], 'anchor': [20, 20], 'popup': [0, 0]}},
   // 685: {'name': '中四国魚', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
@@ -93,7 +93,7 @@ var app = new Vue({
           touchZoom:       'center',
         });
         L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', {
-          attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a>',
+          attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://repot-archive.cocolab.jp/">repot</a> contributors, <a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a>',
           maxZoom: 19,
         }).addTo(this.map);
         this.map.on('popupopen', function(e) {

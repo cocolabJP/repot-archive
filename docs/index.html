@@ -76,11 +76,21 @@
       <span @click.stop="dismissLicenseDialog();" class="ic">閉じる</span>
     </header>
     <div>
+      <h2>データの収集方法</h2>
+      <p>
+        レポっとアーカイブで公開されている位置情報付き写真データは、市民参加型写真収集プラットフォーム「<a href="https://www.iopt.jp/repot">レポっと</a>」を用いて収集されています。
+      </p>
       <h2>ライセンス</h2>
       <p>
-        レポっとアーカイブで公開されている位置情報付き写真データは、全て<a href="https://www.iopt.jp/repot">レポっと</a>アプリで収集されています。
-        全てのデータは、<a href="https://creativecommons.org/licenses/by/4.0/">クリエイティブ・コモンズ・ライセンス（CC BY 4.0 DEED・表示4.0国際）</a>の元で提供されています。
+        レポっとアーカイブで公開されている情報はオープンデータであり、「レポっとオープンデータライセンス」の下でライセンスされています。データの利用者は「レポっと」とその協力者をクレジットする限り、データを自由に利用することができます。
       </p>
+      <h2>クレジット表記の仕方</h2>
+      <p>
+        レポっとアーカイブで公開されている情報を利用する場合は、下記のようにクレジットを表記してください。OpenStreetMapと似たライセンス形態です。
+      </p>
+      <code class="credit">&amp;copy; &lt;a href="https://repot-archive.cocolab.jp/"&gt;repot&lt;/a&gt; contributors</code>
+      <p>下記のように表示されます。</p>
+      <code>&copy; <a href="https://repot-archive.cocolab.jp/">repot</a> contributors</code>
     </div>
   </article>
 </dialog>
@@ -93,6 +103,7 @@
     <div>
       <h2>使用しているライブラリ</h2>
       <ul>
+        <li><a href="https://www.openstreetmap.org/">OpenStreetMap</a></li>
         <li><a href="https://leafletjs.com/" target="_blank">Leaflet.js</a></li>
         <li><a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a></li>
       </ul>
