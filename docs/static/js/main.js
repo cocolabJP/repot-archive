@@ -8,7 +8,7 @@ var HASHTAG_LIST = {
   776: {'name': 'オープンデータソフトクリーム', 'icon': {'name': 'soft-cream', 'size': [32, 50], 'anchor': [16, 50], 'popup': [0, -25]}},
   805: {'name': 'さわのならまち実験', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
   880: {'name': '郡山桜見守り', 'icon': {'name': 'sakura', 'size': [40, 40], 'anchor': [20, 20], 'popup': [0, 0]}},
-  // 685: {'name': '中四国魚', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
+  685: {'name': '中四国魚', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
   // 686: {'name': '釣った場所', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
 };
 const $ = (id) => { return document.getElementById(id); }
@@ -147,7 +147,7 @@ var app = new Vue({
     getDatetimeStr(timestamp) {
       let dt = new Date(timestamp * 1000);
       return dt.getFullYear() + "/"
-           + ("0" + dt.getMonth()).slice(-2) + "/"
+           + ("0" + (dt.getMonth()+1)).slice(-2) + "/"
            + ("0" + dt.getDate()).slice(-2)  + " "
            + ("0" + dt.getHours()).slice(-2) + ":"
            + ("0" + dt.getMinutes()).slice(-2);
