@@ -1,0 +1,10 @@
+﻿v1,v2,slug,name,icon_name,icon_size_x,icon_size_y,icon_anchor_x,icon_anchor_y,popup_x,popup_y
+479,-1,sakusaku,桜咲,sakura,40,40,20,20,0,0
+508,-1,hanasaku,花咲,default,40,50,20,50,0,-25
+702,5,pxky,pxky,pxky,40,50,20,50,0,-25
+700,13,localGourmet,ご当地グルメ,default,40,50,20,50,0,-25
+776,50,opendataIceCream,オープンデータソフトクリーム,ice-cream,32,50,16,50,0,-25
+685,3,chushikokuSakana,中四国魚,default,40,50,20,50,0,-25
+-1,4,komaruKurage,困クラゲ,default,40,50,20,50,0,-25
+880,-1,koriyamaSakuraMimamori,郡山桜見守り,sakura,40,40,20,20,0,0
+805,-1,sawanoNaramachiJikken,さわのならまち実験,default,40,50,20,50,0,-25

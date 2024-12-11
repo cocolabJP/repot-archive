@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;600&family=Noto+Serif+JP:wght@300;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-<link rel="stylesheet" href="static/css/style.css">
+<link rel="stylesheet" href="static/css/style.css?v=2">
 </head>
 <body>
 <div id="app">
@@ -59,10 +59,10 @@
          @mousedown="startDragDivider($event)"></div>
     <ul id="list">
       <li v-for="(repot, id) in archives[hashtag.selected]"
-          :id="'list-' + repot.id">
+          :id="'list-' + repot.slug">
         <img class="lazyload" src="static/img/loading-photo.png"
-             :data-src="THUMB_URL_BASE + repot.filename"
-             @click="showInMap(repot.id)">
+             :data-src="getPhotoURL(repot)"
+             @click="showInMap(repot.slug)">
         <time>${ getDatetimeStr(repot.timestamp) }</time>
       </li>
       <li class="empty" v-if="hashtag.selected == null"><p>左のメニューから、閲覧したいアーカイブのハッシュタグを選んでください</p></li>
@@ -112,7 +112,7 @@
 </dialog>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
-<script src="data/archives.js" type="text/javascript" charset="UTF-8"></script>
-<script src="static/js/main.js" type="text/javascript" charset="UTF-8"></script>
+<script type="module" src="data/archives.js?v=2" type="text/javascript" charset="UTF-8"></script>
+<script type="module" src="static/js/main.js?v=2" type="text/javascript" charset="UTF-8"></script>
 </body>
 </html>

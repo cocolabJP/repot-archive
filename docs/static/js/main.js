@@ -1,16 +1,5 @@
-var PHOTO_URL_BASE = 'https://dxclhyyx7t596.cloudfront.net/uploads/'
-var THUMB_URL_BASE = 'https://d1743dg9i7p6y2.cloudfront.net/photos/';
-var HASHTAG_LIST = {
-  479: {'name': '桜咲', 'icon': {'name': 'sakura', 'size': [40, 40], 'anchor': [20, 20], 'popup': [0, 0]}},
-  508: {'name': '花咲', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
-  700: {'name': 'ご当地グルメ', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
-  702: {'name': 'pxky', 'icon': {'name': 'pxky', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
-  776: {'name': 'オープンデータソフトクリーム', 'icon': {'name': 'soft-cream', 'size': [32, 50], 'anchor': [16, 50], 'popup': [0, -25]}},
-  805: {'name': 'さわのならまち実験', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
-  880: {'name': '郡山桜見守り', 'icon': {'name': 'sakura', 'size': [40, 40], 'anchor': [20, 20], 'popup': [0, 0]}},
-  685: {'name': '中四国魚', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
-  // 686: {'name': '釣った場所', 'icon': {'name': 'default', 'size': [40, 50], 'anchor': [20, 50], 'popup': [0, -25]}},
-};
+import { HASHTAG_LIST, ARCHIVES } from "../../data/archives.js"
+var PHOTO_URL_BASE = 'https://repot-archive.yukimat.jp/photo/'
 const $ = (id) => { return document.getElementById(id); }
 var app = new Vue({
   delimiters: ['${', '}'],
@@ -23,7 +12,7 @@ var app = new Vue({
       list: HASHTAG_LIST,
       selected: null,
     },
-    archives: archives,
+    archives: ARCHIVES,
     view: {
       wh: 0,
       ww: 0,
@@ -121,27 +110,27 @@ var app = new Vue({
                       iconSize: tgtHashtag.icon.size,
                       iconAnchor: tgtHashtag.icon.anchor,
                   }),
-                  repotID: tgtArchive[i].id,
+                  repotSlug: tgtArchive[i].slug,
                 }).bindPopup(L.popup({
-                  'content': '<img class="lazyload" src="static/img/loading-photo.png" data-src="' + THUMB_URL_BASE + tgtArchive[i].filename + '">',
+                  'content': '<img class="lazyload" src="static/img/loading-photo.png" data-src="' + this.getPhotoURL(tgtArchive[i]) + '">',
                   'offset': tgtHashtag.icon.popup,
                 })).on('click', (e) => {
-                  this.showInList(e.target.options.repotID);
+                  this.showInList(e.target.options.repotSlug);
                 });
-        this.markers[tgtArchive[i].id] = m;
+        this.markers[tgtArchive[i].slug] = m;
         this.layer.addLayer(m);
       }
       this.map.addLayer(this.layer)
     },
-    showInMap(repotID) {
-      this.map.flyTo([this.markers[repotID].getLatLng().lat, this.markers[repotID].getLatLng().lng], this.map.getZoom(), {
+    showInMap(repotSlug) {
+      this.map.flyTo([this.markers[repotSlug].getLatLng().lat, this.markers[repotSlug].getLatLng().lng], this.map.getZoom(), {
         animate: true,
         duration: 1.5
       });
-      this.markers[repotID].fire('click');
+      this.markers[repotSlug].fire('click');
     },
-    showInList(repotID) {
-      let y = $("list-" + repotID).offsetTop;
+    showInList(repotSlug) {
+      let y = $("list-" + repotSlug).offsetTop;
       $("list").scrollTo({top: y-70, behavior: 'smooth'});
     },
     getDatetimeStr(timestamp) {
@@ -151,6 +140,9 @@ var app = new Vue({
            + ("0" + dt.getDate()).slice(-2)  + " "
            + ("0" + dt.getHours()).slice(-2) + ":"
            + ("0" + dt.getMinutes()).slice(-2);
+    },
+    getPhotoURL(repot) {
+      return PHOTO_URL_BASE + repot.filename
     }
   },
   computed: {
