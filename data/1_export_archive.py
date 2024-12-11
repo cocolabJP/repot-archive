@@ -23,8 +23,8 @@ for row in df_hashtags.itertuples():
     print("load: " + target_tsv)
     try:
       df_v1 = pd.read_csv(target_tsv, sep='\t')
-      # for idx, df_row in df_v1.iterrows():
-      #   subprocess.call(["cp", "v1_photo/" + df_row.filename, "archive_photo/"])
+      for idx, df_row in df_v1.iterrows():
+        subprocess.call(["cp", "v1_photo/" + df_row.filename, "archive_photo/"])
     except Exception as e:
       print("Error (", target_tsv, ")", e)
 
@@ -34,9 +34,9 @@ for row in df_hashtags.itertuples():
     target_tsv = 'v2_tsv/' + str(row.v2) + '.tsv'
     print("load: " + target_tsv)
     try:
-      df_v2 = pd.read_csv(target_tsv, sep='\t', encoding="shift-jis")
-      # for idx, df_row in df_v2.iterrows():
-      #   subprocess.call(["cp", "v2_photo/" + df_row.filename, "archive_photo/"])
+      df_v2 = pd.read_csv(target_tsv, sep='\t')
+      for idx, df_row in df_v2.iterrows():
+        subprocess.call(["cp", "v2_photo/" + df_row.filename, "archive_photo/"])
     except Exception as e:
       print("Error (", target_tsv, ")", e)
 
