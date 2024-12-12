@@ -1,6 +1,7 @@
 import pandas as pd
 import json
 import subprocess
+import urllib.request
 
 ### v1 データ（変換済み）と v2 データを統合した、アーカイブ生成コード
 
@@ -32,13 +33,21 @@ for row in df_hashtags.itertuples():
   df_v2 = None
   if row.v2 != -1:
     target_tsv = 'v2_tsv/' + str(row.v2) + '.tsv'
-    print("load: " + target_tsv)
+
     try:
+      print("download from v2 server: " + target_tsv)
+      remote_url = 'https://repot.sokendo.studio/static/db-exports/' + str(row.v2) + '.tsv'
+      urllib.request.urlretrieve(remote_url, target_tsv)
+    except Exception as e:
+      print("Error download (", target_tsv, ")", e)
+
+    try:
+      print("load: " + target_tsv)
       df_v2 = pd.read_csv(target_tsv, sep='\t')
       for idx, df_row in df_v2.iterrows():
         subprocess.call(["cp", "v2_photo/" + df_row.filename, "archive_photo/"])
     except Exception as e:
-      print("Error (", target_tsv, ")", e)
+      print("Error load (", target_tsv, ")", e)
 
   # ----- concat v1 and v2
   if df_v1 is not None or df_v2 is not None:
