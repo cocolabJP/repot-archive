@@ -153,6 +153,14 @@ html, body {
   width: calc(100vw - 180px);
 }
 
+.view-container {
+  position: fixed;
+  top: 40px;
+  left: 180px;
+  height: calc(100vh - 40px);
+  width: calc(100vw - 180px);
+}
+
 .map-view,
 .list-view {
   position: absolute;
@@ -195,7 +203,7 @@ html, body {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   margin: 0 0 0 6px;
   padding: 5px;
-  height: 100vh;
+  height: calc(100vh - 40px);
   overflow-y: auto;
 }
 .list-view ul li {
@@ -245,24 +253,39 @@ html, body {
 }
 
 .summary {
-  position: absolute;
+  position: fixed;
   z-index: 1;
-  top: 20px;
-  right: 20px;
-  padding: 20px;
+  top: 0;
+  right: 0px;
+  left: 180px;
+  height: 40px;
+  padding: 0;
   background: white;
-  border-radius: 5px;
-  box-shadow: 1px 1px 3px 1px rgba(0, 0, 0, 0.5);
+  box-shadow: 1px 1px 3px 0 rgba(0, 0, 0, 0.4);
 }
 
 .summary h2 {
-  margin: 0 0 5px;
+  float: left;
+  margin: 0 15px;
+  line-height: 40px;
 }
 .summary h2.ic:before {
   content: "tag";
 }
-.summary p {
+.summary ul {
+  float: right;
   margin: 0;
+  padding: 0;
+  height: 40px;
+}
+.summary ul li {
+  list-style: none;
+  float: left;
+  border: 1px solid #eee;
+  border-width: 0 0 0 1px;
+  height: 40px;
+  line-height: 40px;
+  padding: 0 15px;
 }
 
 .leaflet-popup-content-wrapper {

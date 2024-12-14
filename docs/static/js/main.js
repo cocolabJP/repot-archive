@@ -141,15 +141,28 @@ var app = new Vue({
            + ("0" + dt.getHours()).slice(-2) + ":"
            + ("0" + dt.getMinutes()).slice(-2);
     },
+    getDateStr(timestamp) {
+      let dt = new Date(timestamp * 1000);
+      return dt.getFullYear() + "/"
+           + ("0" + (dt.getMonth()+1)).slice(-2) + "/"
+           + ("0" + dt.getDate()).slice(-2);
+    },
     getPhotoURL(repot) {
       return PHOTO_URL_BASE + repot.filename
     }
   },
   computed: {
-    isBothMode: function() { return this.view.mode == 'both'; },
-    isMapMode:  function() { return this.isBothMode || this.view.selected == 'map';  },
-    isListMode: function() { return this.isBothMode || this.view.selected == 'list'; },
-    mapWidth:   function() { return this.isBothMode ? ((this.view.ww - 180) * this.view.divideRatio) + 'px' : '100%'; },
-    listWidth:  function() { return this.isBothMode ? ((this.view.ww - 180) * (1 - this.view.divideRatio)) + 'px' : '100%'; },
+    isBothMode:  function() { return this.view.mode == 'both'; },
+    isMapMode:   function() { return this.isBothMode || this.view.selected == 'map';  },
+    isListMode:  function() { return this.isBothMode || this.view.selected == 'list'; },
+    mapWidth:    function() { return this.isBothMode ? ((this.view.ww - 180) * this.view.divideRatio) + 'px' : '100%'; },
+    listWidth:   function() { return this.isBothMode ? ((this.view.ww - 180) * (1 - this.view.divideRatio)) + 'px' : '100%'; },
+    displayFrom: function() {
+      return this.getDateStr(this.archives[this.hashtag.selected][0].timestamp);
+    },
+    displayTo: function() {
+      return this.getDateStr(this.archives[this.hashtag.selected][this.archives[this.hashtag.selected].length - 1].timestamp);
+    }
+
   }
 });

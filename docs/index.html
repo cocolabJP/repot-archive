@@ -43,28 +43,35 @@
 <div class="main"
      @mousemove="onDragDivider($event)"
      @mouseup="stopDragDivider($event)">
-  <div v-if="isMapMode" class="map-view"
-       :style="{width: mapWidth}">
-    <div id="map" class="map"></div>
-    <div class="summary" v-if="hashtag.selected != null">
+  <div class="summary">
+    <div v-if="hashtag.selected != null">
       <h2 class="ic">${ hashtag.list[hashtag.selected].name }</h2>
-      <p>レポっと数： ${ archives[hashtag.selected].length }</p>
+      <ul>
+        <li>レポっと数： ${ archives[hashtag.selected].length }</li>
+        <li>表示期間： ${ displayFrom } 〜 ${ displayTo }</li>
+      </ul>
     </div>
   </div>
-  <div v-if="isListMode" class="list-view"
-       :style="{width: listWidth}">
-    <div v-if="isBothMode" class="view-divider"
-         @mousedown="startDragDivider($event)"></div>
-    <ul id="list">
-      <li v-for="(repot, id) in archives[hashtag.selected]"
-          :id="'list-' + repot.slug">
-        <img class="lazyload" src="static/img/loading-photo.png"
-             :data-src="getPhotoURL(repot)"
-             @click="showInMap(repot.slug)">
-        <time>${ getDatetimeStr(repot.timestamp) }</time>
-      </li>
-      <li class="empty" v-if="hashtag.selected == null"><p>左のメニューから、閲覧したいアーカイブのハッシュタグを選んでください</p></li>
-    </ul>
+  <div class="view-container">
+    <div v-if="isMapMode" class="map-view"
+         :style="{width: mapWidth}">
+      <div id="map" class="map"></div>
+    </div>
+    <div v-if="isListMode" class="list-view"
+         :style="{width: listWidth}">
+      <div v-if="isBothMode" class="view-divider"
+           @mousedown="startDragDivider($event)"></div>
+      <ul id="list">
+        <li v-for="(repot, id) in archives[hashtag.selected]"
+            :id="'list-' + repot.slug">
+          <img class="lazyload" src="static/img/loading-photo.png"
+               :data-src="getPhotoURL(repot)"
+               @click="showInMap(repot.slug)">
+          <time>${ getDatetimeStr(repot.timestamp) }</time>
+        </li>
+        <li class="empty" v-if="hashtag.selected == null"><p>左のメニューから、閲覧したいアーカイブのハッシュタグを選んでください</p></li>
+      </ul>
+    </div>
   </div>
 </div>
 <dialog id="license" @click.stop="dismissLicenseDialog();">
