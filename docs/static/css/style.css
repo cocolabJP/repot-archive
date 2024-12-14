@@ -37,7 +37,7 @@ html, body {
 .side-nav h1 {
   width: 150px;
   height: 135px;
-  margin: 15px;
+  margin: 10px 15px 20px;
   background: white url('../img/archives-logo.png') center center/100% 100% no-repeat;
   aspect-ratio: 10/9;
 }
@@ -47,10 +47,15 @@ html, body {
 }
 
 .side-nav > div {
-  padding: 20px 0;
+  padding: 0 0 10px;
+  height: calc(100vh - 100px);
+  overflow-y: scroll;
 }
 
 .side-nav h2 {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   font-size: 1rem;
   text-align: center;
   padding: 8px 0;
@@ -58,6 +63,8 @@ html, body {
 }
 
 .side-nav ul.hashtags {
+  position: relative;
+  z-index: 0;
   padding: 5px 0;
   margin: 0;
 }
@@ -110,19 +117,21 @@ html, body {
   position: absolute;
   bottom: 0;
   width: 100%;
-  padding: 20px 0;
+  padding: 5px 0 12px;
   text-align: center;
   font-size: 0.8rem;
+  border: 1px solid #eee;
+  border-width: 1px 0 0;
 }
 
 .side-nav footer ul {
-  padding: 20px 0;
+  padding: 0 0 6px;
   margin: 0;
 }
 .side-nav footer ul li {
   list-style: none;
   width: 100%;
-  padding: 8px 5px;
+  padding: 7px 5px;
 }
 .side-nav footer ul li:hover {
   cursor: pointer;
