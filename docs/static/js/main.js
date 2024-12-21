@@ -21,6 +21,10 @@ var app = new Vue({
       divideRatio: 0.5,
       isDragging: false,
     },
+    period: {
+      from: -1,
+      to: -1,
+    }
   },
   created: function() {
   },
@@ -68,6 +72,21 @@ var app = new Vue({
     dismissAboutDialog() {
       $("about").close();
     },
+    showPeriodSettingDialog() {
+      $("period-setting").showModal();
+    },
+    dismissPeriodSettingDialog() {
+      $("period-setting").close();
+    },
+    setPeriod() {
+      this.period.from = new Date($("form-period-from").value);
+      this.period.to = new Date($("form-period-to").value);
+      this.dismissPeriodSettingDialog();
+    },
+    checkPeriod(timestamp) {
+      let dt = new Date(timestamp * 1000);
+      return (dt >= this.period.from && dt <= this.period.to);
+    },
     showMap() {
       setTimeout(() => {
         this.map = L.map('map', {
@@ -91,6 +110,8 @@ var app = new Vue({
       }, 500);
     },
     setHashtag(hashtag) {
+      this.period.from = new Date("2000-01-01");
+      this.period.to = new Date();
       this.hashtag.selected = hashtag;
       this.putMarkers();
       setTimeout(() => lazyload(), 500);
@@ -141,8 +162,7 @@ var app = new Vue({
            + ("0" + dt.getHours()).slice(-2) + ":"
            + ("0" + dt.getMinutes()).slice(-2);
     },
-    getDateStr(timestamp) {
-      let dt = new Date(timestamp * 1000);
+    getDateStr(dt) {
       return dt.getFullYear() + "/"
            + ("0" + (dt.getMonth()+1)).slice(-2) + "/"
            + ("0" + dt.getDate()).slice(-2);
@@ -158,10 +178,14 @@ var app = new Vue({
     mapWidth:    function() { return this.isBothMode ? ((this.view.ww - 180) * this.view.divideRatio) + 'px' : '100%'; },
     listWidth:   function() { return this.isBothMode ? ((this.view.ww - 180) * (1 - this.view.divideRatio)) + 'px' : '100%'; },
     displayFrom: function() {
-      return this.getDateStr(this.archives[this.hashtag.selected][0].timestamp);
+      let dt = new Date(this.archives[this.hashtag.selected][0].timestamp * 1000);
+      dt = (dt < this.period.from) ? this.period.from : dt;
+      return this.getDateStr(dt);
     },
     displayTo: function() {
-      return this.getDateStr(this.archives[this.hashtag.selected][this.archives[this.hashtag.selected].length - 1].timestamp);
+      let dt = new Date(this.archives[this.hashtag.selected][this.archives[this.hashtag.selected].length - 1].timestamp * 1000);
+      dt = (dt > this.period.to) ? this.period.from : dt;
+      return this.getDateStr(dt);
     }
 
   }

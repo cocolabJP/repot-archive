@@ -48,7 +48,7 @@
       <h2 class="ic">${ hashtag.list[hashtag.selected].name }</h2>
       <ul>
         <li>レポっと数： ${ archives[hashtag.selected].length }</li>
-        <li>表示期間： ${ displayFrom } 〜 ${ displayTo }</li>
+        <li @click="showPeriodSettingDialog">表示期間： ${ displayFrom } 〜 ${ displayTo }</li>
       </ul>
     </div>
   </div>
@@ -63,6 +63,7 @@
            @mousedown="startDragDivider($event)"></div>
       <ul id="list">
         <li v-for="(repot, id) in archives[hashtag.selected]"
+            v-if="checkPeriod(repot.timestamp)"
             :id="'list-' + repot.slug">
           <img class="lazyload" src="static/img/loading-photo.png"
                :data-src="getPhotoURL(repot)"
@@ -74,6 +75,20 @@
     </div>
   </div>
 </div>
+<dialog id="period-setting">
+  <article>
+    <header>
+      <h1>表示期間の変更</h1>
+      <span @click.stop="dismissPeriodSettingDialog();" class="ic">閉じる</span>
+    </header>
+    <div class="period-form">
+      <input type="text" name="form-period-from" id="form-period-from">
+      〜
+      <input type="text" name="form-period-to" id="form-period-to">
+      <span class="form-set-period" @click.stop="setPeriod();">決定</span>
+    </div>
+  </article>
+</dialog>
 <dialog id="license" @click.stop="dismissLicenseDialog();">
   <article @click.stop="">
     <header>

@@ -50,9 +50,9 @@ INNER JOIN (
   ) AS H ON repots.id = H.repot_id
 WHERE
   id in (
-    SELECT repot_id FROM repot_hashtag_relationships WHERE hashtag_id = 141
+    SELECT repot_id FROM repot_hashtag_relationships WHERE hashtag_id = 3
   )
-;" > /tmp/backup/141.tsv'
+;" > /tmp/backup/3.tsv'
 ```
 
 

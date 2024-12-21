@@ -357,7 +357,25 @@ dialog article code {
 dialog article code:not(:last-child) {
   margin: 8px 0;
 }
-
 dialog article > header span:before {
   content: "close";
+}
+dialog div.period-form {
+  text-align: center;
+}
+dialog div.period-form input {
+  width: 30%;
+  background: #eee;
+  border-radius: 10px;
+  border: 0;
+  padding: 10px;
+  margin: 0 5px;
+}
+dialog span.form-set-period {
+  background: #0099cc;
+  border-radius: 10px;
+  padding: 10px 20px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
 }

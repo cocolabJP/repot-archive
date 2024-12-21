@@ -6,11 +6,14 @@ import os
 
 ### v1 データ（変換済み）と v2 データを統合した、アーカイブ生成コード
 
+ignore_photo_copy = True
+
 df_hashtags = pd.read_csv("archive_list.csv")
 print(df_hashtags)
 
 subprocess.call("rm ../docs/data/archives/*.js", shell=True)
-subprocess.call("rm archive_photo/*.png", shell=True)
+if not ignore_photo_copy:
+  subprocess.call("rm archive_photo/*.png", shell=True)
 
 js_import = ""
 archive_list = ""
@@ -25,8 +28,9 @@ for row in df_hashtags.itertuples():
     print("load: " + target_tsv)
     try:
       df_v1 = pd.read_csv(target_tsv, sep='\t')
-      for idx, df_row in df_v1.iterrows():
-        subprocess.call(["cp", "v1_photo/" + df_row.filename, "archive_photo/"])
+      if not ignore_photo_copy:
+        for idx, df_row in df_v1.iterrows():
+          subprocess.call(["cp", "v1_photo/" + df_row.filename, "archive_photo/"])
     except Exception as e:
       print("Error (", target_tsv, ")", e)
 
@@ -51,7 +55,8 @@ for row in df_hashtags.itertuples():
           print("download photo from v2 server: " + df_row.filename)
           remote_url = 'https://repot.sokendo.studio/uploads/original/' + df_row.filename
           urllib.request.urlretrieve(remote_url, photo_path)
-        subprocess.call(["cp", photo_path, "archive_photo/"])
+        if not ignore_photo_copy:
+          subprocess.call(["cp", photo_path, "archive_photo/"])
     except Exception as e:
       print("Error load (", target_tsv, ")", e)
 
