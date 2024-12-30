@@ -41,7 +41,7 @@ for row in df_hashtags.itertuples():
 
     try:
       print("download csv from v2 server: " + target_tsv)
-      remote_url = 'https://repot.sokendo.studio/static/db-exports/' + str(row.v2) + '.tsv'
+      remote_url = 'https://repot.sokendo.studio/static/archive/' + str(row.v2) + '.tsv'
       urllib.request.urlretrieve(remote_url, target_tsv)
     except Exception as e:
       print("Error download (", target_tsv, ")", e)

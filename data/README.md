@@ -30,7 +30,7 @@ WHERE
 CSVに出力
 
 ```
-docker compose exec mysql bash -c 'mysql --defaults-extra-file=/tmp/backup/backup.cnf $MYSQL_DATABASE -e "SELECT
+docker compose exec mysql bash -c "mysql --defaults-extra-file=/tmp/backup/mysql.cnf $MYSQL_DATABASE -e "SELECT
 timestamp, slug, filename, caption, location_lat, location_lng, location_alt, location_acc, H.hashtag_names
 FROM
   repots
@@ -42,7 +42,7 @@ INNER JOIN (
       hashtags.name separator \";\"
     ) AS hashtag_names
     FROM
-      repot_hashtag_relationships AS R
+      (SELECT hashtag_id, repot_id FROM repot_hashtag_relationships WHERE is_active = 1) AS R
     INNER JOIN
       hashtags ON R.hashtag_id = hashtags.id
     GROUP BY
@@ -50,9 +50,9 @@ INNER JOIN (
   ) AS H ON repots.id = H.repot_id
 WHERE
   id in (
-    SELECT repot_id FROM repot_hashtag_relationships WHERE hashtag_id = 3
+    SELECT repot_id FROM repot_hashtag_relationships WHERE is_active = 1 AND hashtag_id = 3
   )
-;" > /tmp/backup/3.tsv'
+;" > /tmp/archive/3.tsv'
 ```
 
 
