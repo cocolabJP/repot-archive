@@ -63,6 +63,7 @@ for row in df_hashtags.itertuples():
   # ----- concat v1 and v2
   if df_v1 is not None or df_v2 is not None:
     df_archive = pd.concat([df_v1, df_v2])
+    df_archive = df_archive.sort_values('timestamp', ascending=False)
     json_archive = df_archive.to_json(orient='records', force_ascii=False)
 
     f = open('../docs/data/archives/' + row.slug + '.js', 'w')

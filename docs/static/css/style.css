@@ -302,6 +302,9 @@ html, body {
 .leaflet-popup-close-button {
   color: white!important;
 }
+.leaflet-bottom {
+  bottom: 40px;
+}
 
 
 
