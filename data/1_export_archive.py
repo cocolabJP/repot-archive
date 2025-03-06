@@ -6,7 +6,7 @@ import os
 
 ### v1 データ（変換済み）と v2 データを統合した、アーカイブ生成コード
 
-ignore_photo_copy = False
+ignore_photo_copy = True
 
 df_hashtags = pd.read_csv("archive_list.csv")
 print(df_hashtags)
