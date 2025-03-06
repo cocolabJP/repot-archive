@@ -40,6 +40,19 @@ var app = new Vue({
       // 画面の向き変更イベントを登録
       window.addEventListener('resize', this.updateScreenSize);
       this.showMap();
+      this.checkQueryStrings();
+    },
+    checkQueryStrings() {
+      var queryStr = window.location.search.slice(1);
+      if (queryStr) {
+        queryStr.split('&').forEach((queryStr) => {
+          var queryArr = queryStr.split('=');
+          if(queryArr[0] == 'h' &&
+            Object.keys(this.archives).includes(queryArr[1])) {
+            setTimeout(() => this.setHashtag(queryArr[1]), 1000);
+          }
+        });
+      }
     },
     updateScreenSize() {
       this.view.wh = window.innerHeight;
@@ -169,7 +182,7 @@ var app = new Vue({
     },
     getPhotoURL(repot) {
       return PHOTO_URL_BASE + repot.filename
-    }
+    },
   },
   computed: {
     isBothMode:  function() { return this.view.mode == 'both'; },
