@@ -4,6 +4,15 @@ html, body {
   font-family: 'Noto Sans JP', Helvetica, Arial, sans-serif;
 }
 
+a {
+  color: #0099cc;
+  text-decoration: none;
+  font-weight: bold;
+}
+a:hover {
+  color: #006699;
+}
+
 .ic:before {
   position: relative;
   top: 2px;
@@ -198,7 +207,7 @@ html, body {
   height: 100%;
 }
 
-.list-view ul {
+.list-view > ul {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   margin: 0 0 0 6px;
@@ -206,14 +215,14 @@ html, body {
   height: calc(100vh - 40px);
   overflow-y: auto;
 }
-.list-view ul li {
+.list-view > ul > li {
   position: relative;
   list-style: none;
   margin: 4px;
   width: calc(100% - 8px);
   aspect-ratio: 16/9;
 }
-.list-view ul li img {
+.list-view > ul > li img {
   position: absolute;
   left: 0;
   top: 0;
@@ -226,7 +235,7 @@ html, body {
   border: 1px solid #ddd;
   border-radius: 5px;
 }
-.list-view ul li time {
+.list-view > ul > li time {
   position: absolute;
   left: 10px;
   top: 5px;
@@ -235,7 +244,7 @@ html, body {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
   font-family: courier;
 }
-.list-view ul li.empty {
+.list-view > ul > li.empty {
   display: table;
   text-align: center;
   width: calc(100% - 8px);
@@ -244,13 +253,34 @@ html, body {
   border-radius: 10px;
   padding: 50px;
 }
-.list-view ul li.empty p {
+.list-view > ul > li.empty p {
   display: table-cell;
   vertical-align: middle;
   font-size: 1.2rem;
   font-weight: bold;
   color: #999;
 }
+.list-view ul.hashtags {
+  position: absolute;
+  z-index: 10;
+  bottom: 5px;
+  left: 5px;
+  padding: 0;
+}
+.list-view ul.hashtags li {
+  list-style: none;
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.6);
+  margin: 3px 3px 0 0;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+.list-view ul.hashtags li.caution {
+  background: rgba(255, 255, 0, 0.8);
+}
+
 
 .summary {
   position: fixed;
@@ -289,16 +319,35 @@ html, body {
 }
 
 .leaflet-popup-content-wrapper {
-  border-radius: 10px;
+  border-radius: 6px;
 }
 .leaflet-popup-content {
   margin: 1px;
   width: 200px;
 }
 .leaflet-popup-content img {
-  border-radius: 8px;
+  border-radius: 4px;
   width: 100%;
 }
+.leaflet-popup-content p {
+  margin: 5px 5px 0;
+  font-size: 0.7rem;
+  line-height: 0.9rem;
+}
+.leaflet-popup-content ul {
+  margin: 0;
+  padding: 3px;
+}
+.leaflet-popup-content ul li {
+  list-style: none;
+  display: inline-block;
+  background: rgba(0, 0, 0, 0.1);
+  margin: 3px 3px 0 0;
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-size: 0.7rem;
+}
+
 .leaflet-popup-close-button {
   color: white!important;
 }
@@ -344,9 +393,16 @@ dialog article > div {
   padding: 20px;
 }
 dialog article h2 {
-  font-size: 1.2rem;
+  font-size: 1.4rem;
+  color: #0099cc;
 }
 dialog article p + h2 {
+  margin: 15px 0 0;
+}
+dialog article h3 {
+  font-size: 1rem;
+}
+dialog article p + h3 {
   margin: 15px 0 0;
 }
 dialog article code {

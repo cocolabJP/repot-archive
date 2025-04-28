@@ -1,2 +1,2 @@
-const archive_komaruKurage = [{"timestamp":1745721236,"slug":"20250427113356_7c7ed","filename":"20250427113356_7c7ed.png","caption":null,"location_lat":34.5638272138,"location_lng":134.0994501659,"location_alt":9.5481760841,"location_acc":36.8993341525,"hashtag_names":"クラゲ;困クラゲ"}];
+const archive_komaruKurage = [{"timestamp":1745721236,"slug":"20250427113356_7c7ed","filename":"20250427113356_7c7ed.png","caption":null,"location_lat":34.5638272138,"location_lng":134.0994501659,"location_alt":9.5481760841,"location_acc":36.8993341525,"hashtag_names":["クラゲ","海"],"caution_flag":false}];
 export default archive_komaruKurage;

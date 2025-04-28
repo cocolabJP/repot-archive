@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;600&family=Noto+Serif+JP:wght@300;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-<link rel="stylesheet" href="static/css/style.css?v=2.2">
+<link rel="stylesheet" href="static/css/style.css?v=2.3">
 </head>
 <body>
 <div id="app">
@@ -69,6 +69,10 @@
                :data-src="getPhotoURL(repot)"
                @click="showInMap(repot.slug)">
           <time>${ getDatetimeStr(repot.timestamp) }</time>
+          <ul class="hashtags">
+            <li v-if="repot.caution_flag" class="caution">利用上の注意</li>
+            <li v-for="h in repot.hashtag_names">${ h }</li>
+          </ul>
         </li>
         <li class="empty" v-if="hashtag.selected == null"><p>左のメニューから、閲覧したいアーカイブのハッシュタグを選んでください</p></li>
       </ul>
@@ -102,9 +106,13 @@
       </p>
       <h2>ライセンス</h2>
       <p>
-        レポっとアーカイブで公開されている情報は「レポっとオープンデータライセンス」の下で提供されています。データの利用者は「レポっと」とその協力者をクレジットする限り、データを自由に利用することができます。
+        レポっとアーカイブで公開されている情報は「レポっとオープンデータライセンス」の下で提供されています。データの利用者は、例外データ（下記参照）を除き、「レポっと」とその協力者をクレジットする限りにおいて、データを自由に利用することができます。
       </p>
-      <h2>クレジット表記の仕方</h2>
+      <h3>例外データについて</h3>
+      <p>
+        写真内に著作物が映り込んでいる場合は、著作者の許諾を得る必要がある場合があります。当アーカイブが著作物の存在を確認したものについては、「利用上の注意」というタグを付けておりますので参考にしてください。
+      </p>
+      <h3>クレジット表記の仕方</h3>
       <p>
         レポっとアーカイブで公開されている情報を利用する場合は、下記のようにクレジットを表記してください。OpenStreetMapと似たライセンス形態です。
       </p>
@@ -132,7 +140,7 @@
 </dialog>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
-<script type="module" src="data/archives.js?v=2.2" type="text/javascript" charset="UTF-8"></script>
-<script type="module" src="static/js/main.js?v=2.2" type="text/javascript" charset="UTF-8"></script>
+<script type="module" src="data/archives.js?v=2.3" type="text/javascript" charset="UTF-8"></script>
+<script type="module" src="static/js/main.js?v=2.3" type="text/javascript" charset="UTF-8"></script>
 </body>
 </html>

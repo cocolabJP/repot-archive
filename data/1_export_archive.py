@@ -3,6 +3,7 @@ import json
 import subprocess
 import urllib.request
 import os
+import time
 
 ### v1 データ（変換済み）と v2 データを統合した、アーカイブ生成コード
 
@@ -64,6 +65,18 @@ for row in df_hashtags.itertuples():
   if df_v1 is not None or df_v2 is not None:
     df_archive = pd.concat([df_v1, df_v2])
     df_archive = df_archive.sort_values('timestamp', ascending=False)
+    df_archive.reset_index(inplace=True, drop=True)
+    df_archive['caution_flag'] = False
+    for archive_row in df_archive.itertuples():
+      hashtags = archive_row.hashtag_names.split(";")
+      for i, h in reversed(list(enumerate(hashtags))):
+        if h == row.name:
+          hashtags.pop(i)
+        if h == '利用上の注意':
+          hashtags.pop(i)
+          df_archive.at[archive_row.Index, 'caution_flag'] = True
+      df_archive.at[archive_row.Index, 'hashtag_names'] = hashtags
+
     json_archive = df_archive.to_json(orient='records', force_ascii=False)
 
     f = open('../docs/data/archives/' + row.slug + '.js', 'w')

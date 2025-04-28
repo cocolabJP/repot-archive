@@ -146,7 +146,12 @@ var app = new Vue({
                   }),
                   repotSlug: tgtArchive[i].slug,
                 }).bindPopup(L.popup({
-                  'content': '<img class="lazyload" src="static/img/loading-photo.png" data-src="' + this.getPhotoURL(tgtArchive[i]) + '">',
+                  'content': '<img class="lazyload" src="static/img/loading-photo.png" data-src="' + this.getPhotoURL(tgtArchive[i]) + '">'
+                              + ((tgtArchive[i].caption) != null ? '<p>' + tgtArchive[i].caption + '</p>' : '')
+                              + '<ul>'
+                                  + '<li>' + tgtHashtag.name + '</li>'
+                                  + ((tgtArchive[i].hashtag_names.length > 0) ? '<li>' + tgtArchive[i].hashtag_names.join('</li><li>') + '</li>' : '')
+                              + '</ul>',
                   'offset': tgtHashtag.icon.popup,
                 })).on('click', (e) => {
                   this.showInList(e.target.options.repotSlug);
@@ -191,12 +196,12 @@ var app = new Vue({
     mapWidth:    function() { return this.isBothMode ? ((this.view.ww - 180) * this.view.divideRatio) + 'px' : '100%'; },
     listWidth:   function() { return this.isBothMode ? ((this.view.ww - 180) * (1 - this.view.divideRatio)) + 'px' : '100%'; },
     displayFrom: function() {
-      let dt = new Date(this.archives[this.hashtag.selected][0].timestamp * 1000);
+      let dt = new Date(this.archives[this.hashtag.selected][this.archives[this.hashtag.selected].length - 1].timestamp * 1000);
       dt = (dt < this.period.from) ? this.period.from : dt;
       return this.getDateStr(dt);
     },
     displayTo: function() {
-      let dt = new Date(this.archives[this.hashtag.selected][this.archives[this.hashtag.selected].length - 1].timestamp * 1000);
+      let dt = new Date(this.archives[this.hashtag.selected][0].timestamp * 1000);
       dt = (dt > this.period.to) ? this.period.from : dt;
       return this.getDateStr(dt);
     }
