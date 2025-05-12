@@ -4,3 +4,4 @@ data/v1_photo/*.png
 data/v1_photo-original/*.png
 data/v2_photo/*.png
 data/2_*
+data/v2_backup/photo/*.png
