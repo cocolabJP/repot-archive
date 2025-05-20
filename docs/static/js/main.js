@@ -103,8 +103,8 @@ var app = new Vue({
     showMap() {
       setTimeout(() => {
         this.map = L.map('map', {
-          center: [34.73177572534839, 135.73429797376784],
-          zoom: 10,
+          center: [34.66658501665325, 133.91804081661178],
+          zoom: 12,
           zoomControl: true,
           minZoom: 0,
           maxZoom: 18,
