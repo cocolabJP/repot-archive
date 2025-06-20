@@ -9,14 +9,14 @@ js_import = ""
 archive_list = ""
 archive_meta = {}
 
-# backup_sql = 'v2_backup/backup.sql'
+backup_sql = 'v2_backup/backup.sql'
 
-# try:
-#   print("download backup.sql from v2 server")
-#   remote_url = 'https://repot.sokendo.studio/static/backup/backup_20250430.sql'
-#   urllib.request.urlretrieve(remote_url, backup_sql)
-# except Exception as e:
-#   print("Error download (", backup_sql, ")", e)
+try:
+  print("download backup.sql from v2 server")
+  remote_url = 'https://repot.sokendo.studio/static/backup/backup_20250621.sql'
+  urllib.request.urlretrieve(remote_url, backup_sql)
+except Exception as e:
+  print("Error download (", backup_sql, ")", e)
 
 
 all_tsv = 'v2_backup/all.tsv'
