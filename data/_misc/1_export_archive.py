@@ -4,96 +4,21 @@ import subprocess
 import urllib.request
 import os
 import time
-from PIL import Image
 
 ### v1 データ（変換済み）と v2 データを統合した、アーカイブ生成コード
+
+ignore_photo_copy = True
 
 df_hashtags = pd.read_csv("archive_list.csv")
 print(df_hashtags)
 
 subprocess.call("rm ../docs/data/archives/*.js", shell=True)
+if not ignore_photo_copy:
+  subprocess.call("rm archive_photo/*.png", shell=True)
 
 js_import = ""
 archive_list = ""
 archive_meta = {}
-
-def compress_photo(photo_path):
-  # リサイズ
-  img = Image.open(photo_path)
-  max_size = (1920, 1920)
-  img_size = img.size
-  if img_size[0] > max_size[0] or img_size[1] > max_size[1]:
-    img.thumbnail(max_size)
-    img.save(photo_path, format="PNG", quality=80, optimize=True, progressive=True)
-    print(f"resized: {img_size} -> {img.size} ... save_to: {"archive_photo/" + df_row.filename}")
-  # ファイルの中身と拡張子の一致を確認
-  ext = os.path.splitext(photo_path)[1].lower()
-  fmt = "." + img.format.lower().replace("e", "")
-  if ext != fmt:
-    print("ext and format is not mached! -->", ext, fmt)
-    if ext == ".png":
-      img.save(photo_path, format="PNG", optimize=True)
-    elif ext == ".jpg":
-      img.save(photo_path, format="JPEG", optimize=True)
-  # ファイルサイズの圧縮
-  if ext in [".jpg", ".jpeg"]:
-    jpegoptim_cmd = [
-        "jpegoptim",
-        "--max=80",       # 最大画質を80%に
-        "--strip-all",    # メタデータ削除
-        "--all-progressive"  # プログレッシブJPEGにする
-    ]
-    result_j = subprocess.run(
-        jpegoptim_cmd + [photo_path],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True
-    )
-    if result_j.returncode == 0:
-      print(f"✅️ jpegoptim OK: {result_j.stdout}")
-    else:
-      print(f"❌ jpegoptim err: {result_j.returncode}")
-  elif ext == ".png":
-    pngquant_cmd = [
-        "pngquant",
-        "--quality=65-80",
-        "--ext", ".png",
-        "--force"
-    ]
-    optipng_cmd = [
-        "optipng",
-        "-o7"
-    ]
-    result_q = subprocess.run(
-        pngquant_cmd + [photo_path],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True
-    )
-    if result_q.returncode == 0:
-        print(f"✅️ pngquant OK: {result_q.stdout}")
-    else:
-        print(f"❌ pngquant err: {result_q.returncode}")
-
-    # # optipng ... 処理時間が長い
-    # result_o = subprocess.run(
-    #     optipng_cmd + [photo_path],
-    #     stdout=subprocess.PIPE,
-    #     stderr=subprocess.PIPE,
-    #     text=True
-    # )
-    # if result_o.returncode == 0:
-    #     print(result_o.stdout)
-    # else:
-    #     print(f"❌ optipng err: {result_o.stdout} {result_o.stderr}")
-
-def make_thumbnail(photo_path, thumbnail_path):
-  img = Image.open(photo_path)
-  max_size = (480, 480)
-  img.thumbnail(max_size)
-  img.save(thumbnail_path, format="PNG", quality=80, optimize=True, progressive=True)
-
-
 
 for row in df_hashtags.itertuples():
   print("\n[", row.slug, "]")
@@ -104,12 +29,9 @@ for row in df_hashtags.itertuples():
     print("load: " + target_tsv)
     try:
       df_v1 = pd.read_csv(target_tsv, sep='\t')
-      for idx, df_row in df_v1.iterrows():
-        print("\n" + df_row.filename)
-        subprocess.call(["rsync", "-u", "v1_photo/" + df_row.filename, "archive_photo/"])
-        photo_path = "archive_photo/" + df_row.filename
-        # compress_photo(photo_path)
-        make_thumbnail(photo_path, "archive_thumb/" + df_row.filename)
+      if not ignore_photo_copy:
+        for idx, df_row in df_v1.iterrows():
+          subprocess.call(["cp", "v1_photo/" + df_row.filename, "archive_photo/"])
     except Exception as e:
       print("Error (", target_tsv, ")", e)
 
@@ -129,17 +51,13 @@ for row in df_hashtags.itertuples():
       print("load: " + target_tsv)
       df_v2 = pd.read_csv(target_tsv, sep='\t')
       for idx, df_row in df_v2.iterrows():
-        print("\n" + df_row.filename)
         photo_path = "v2_photo/" + df_row.filename
         if not os.path.isfile(photo_path):
           print("download photo from v2 server: " + df_row.filename)
           remote_url = 'https://repot.sokendo.studio/uploads/original/' + df_row.filename
           urllib.request.urlretrieve(remote_url, photo_path)
-        subprocess.call(["rsync", "-u", photo_path, "archive_photo/"])
-        # 以下、ファイルサイズ削減処理
-        photo_path = "archive_photo/" + df_row.filename
-        # compress_photo(photo_path)
-        make_thumbnail(photo_path, "archive_thumb/" + df_row.filename)
+        if not ignore_photo_copy:
+          subprocess.call(["cp", photo_path, "archive_photo/"])
     except Exception as e:
       print("Error load (", target_tsv, ")", e)
 
@@ -186,3 +104,25 @@ f.write(js_import
         + "export const ARCHIVES = {" + archive_list[:-1] + "};")
 f.close()
 
+
+
+
+### v1 のアーカイブファイル生成コード (duplicated)
+
+# target_hashtags = [479, 702, 805, 700, 880, 508, 776, 685]
+
+# json = "var archives = {"
+# for h in target_hashtags:
+#   target_tsv = 'tsv/' + str(h) + '.tsv'
+#   print("\n--> " + target_tsv)
+#   try:
+#     df = pd.read_csv(target_tsv, sep='\t')
+#     json += str(h) + ":" + df.to_json(orient='records') + ","
+#     print(str(df.shape[0]) + " items")
+#   except:
+#     print("Error: " + target_tsv)
+# json += "};"
+
+# f = open('../docs/data/archives.js', 'w')
+# f.write(json)
+# f.close()

@@ -1,5 +1,5 @@
 import { HASHTAG_LIST, ARCHIVES } from "../../data/archives.js"
-var PHOTO_URL_BASE = 'https://repot-archive.yukimat.jp/photo/'
+var PHOTO_URL_BASE = 'https://repot-archive.yukimat.jp/thumb/'
 const $ = (id) => { return document.getElementById(id); }
 var app = new Vue({
   delimiters: ['${', '}'],

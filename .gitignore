@@ -1,5 +1,8 @@
 .DS_Store
 data/archive_photo/*.png
+data/archive_photo/*.tmp
+data/archive_thumb/*.png
+data/archive_thumb/*.tmp
 data/v1_photo/*.png
 data/v1_photo-original/*.png
 data/v2_photo/*.png
