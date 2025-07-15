@@ -17,16 +17,9 @@ js_import = ""
 archive_list = ""
 archive_meta = {}
 
-def compress_photo(photo_path):
-  # リサイズ
+# 写真ファイルの中身と拡張子の一致を確認
+def check_photo_extension_and_format(photo_path):
   img = Image.open(photo_path)
-  max_size = (1920, 1920)
-  img_size = img.size
-  if img_size[0] > max_size[0] or img_size[1] > max_size[1]:
-    img.thumbnail(max_size)
-    img.save(photo_path, format="PNG", quality=80, optimize=True, progressive=True)
-    print(f"resized: {img_size} -> {img.size} ... save_to: {"archive_photo/" + df_row.filename}")
-  # ファイルの中身と拡張子の一致を確認
   ext = os.path.splitext(photo_path)[1].lower()
   fmt = "." + img.format.lower().replace("e", "")
   if ext != fmt:
@@ -35,7 +28,26 @@ def compress_photo(photo_path):
       img.save(photo_path, format="PNG", optimize=True)
     elif ext == ".jpg":
       img.save(photo_path, format="JPEG", optimize=True)
-  # ファイルサイズの圧縮
+
+# 写真ファイルのリサイズ
+def resize_photo(photo_path):
+  img = Image.open(photo_path)
+  max_size = (1920, 1920)
+  img_size = img.size
+  if img_size[0] > max_size[0] or img_size[1] > max_size[1]:
+    img.thumbnail(max_size)
+    img.save(photo_path, format="PNG", quality=80, optimize=True, progressive=True)
+    print(f"resized: {img_size} -> {img.size} ... save_to: {"archive_photo/" + df_row.filename}")
+
+# 写真ファイルの圧縮
+def compress_photo(photo_path):
+  if os.path.getsize(photo_path) < 3 * 1024 * 1024:
+    # ファイルサイズが3MB以下のときは圧縮しない
+    return
+
+  print("\n" + photo_path)
+  img = Image.open(photo_path)
+  ext = os.path.splitext(photo_path)[1].lower()
   if ext in [".jpg", ".jpeg"]:
     jpegoptim_cmd = [
         "jpegoptim",
@@ -94,7 +106,6 @@ def make_thumbnail(photo_path, thumbnail_path):
   img.save(thumbnail_path, format="PNG", quality=80, optimize=True, progressive=True)
 
 
-
 for row in df_hashtags.itertuples():
   print("\n[", row.slug, "]")
   # ------------ v1
@@ -105,11 +116,12 @@ for row in df_hashtags.itertuples():
     try:
       df_v1 = pd.read_csv(target_tsv, sep='\t')
       for idx, df_row in df_v1.iterrows():
-        print("\n" + df_row.filename)
         subprocess.call(["rsync", "-u", "v1_photo/" + df_row.filename, "archive_photo/"])
         photo_path = "archive_photo/" + df_row.filename
+        # check_photo_extension_and_format(photo_path)
+        # resize_photo(photo_path)
         # compress_photo(photo_path)
-        make_thumbnail(photo_path, "archive_thumb/" + df_row.filename)
+        # make_thumbnail(photo_path, "archive_thumb/" + df_row.filename)
     except Exception as e:
       print("Error (", target_tsv, ")", e)
 
@@ -129,7 +141,6 @@ for row in df_hashtags.itertuples():
       print("load: " + target_tsv)
       df_v2 = pd.read_csv(target_tsv, sep='\t')
       for idx, df_row in df_v2.iterrows():
-        print("\n" + df_row.filename)
         photo_path = "v2_photo/" + df_row.filename
         if not os.path.isfile(photo_path):
           print("download photo from v2 server: " + df_row.filename)
@@ -138,7 +149,9 @@ for row in df_hashtags.itertuples():
         subprocess.call(["rsync", "-u", photo_path, "archive_photo/"])
         # 以下、ファイルサイズ削減処理
         photo_path = "archive_photo/" + df_row.filename
-        # compress_photo(photo_path)
+        # check_photo_extension_and_format(photo_path)
+        # resize_photo(photo_path)
+        compress_photo(photo_path)
         make_thumbnail(photo_path, "archive_thumb/" + df_row.filename)
     except Exception as e:
       print("Error load (", target_tsv, ")", e)
