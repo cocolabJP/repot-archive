@@ -10,7 +10,7 @@ import datetime
 ### v1 データ（変換済み）と v2 データを統合した、アーカイブ生成コード
 
 # この日以降のみをデータ圧縮などの対象にする
-target_period_from = datetime.date(2025, 7, 15)
+target_period_from = datetime.date(2025, 7, 23)
 
 df_hashtags = pd.read_csv("archive_list.csv")
 print(df_hashtags)
@@ -60,6 +60,7 @@ def compress_photo(photo_path):
   img = Image.open(photo_path)
   ext = os.path.splitext(photo_path)[1].lower()
   if ext in [".jpg", ".jpeg"]:
+    # jpegoptim --max=80 --strip-all --all-progressive
     jpegoptim_cmd = [
         "jpegoptim",
         "--max=80",       # 最大画質を80%に
@@ -77,6 +78,7 @@ def compress_photo(photo_path):
     else:
       print(f"----> ❌ jpegoptim err: {result_j.returncode}")
   elif ext == ".png":
+    # pngquant --quality=65-80 --ext .png --force
     pngquant_cmd = [
         "pngquant",
         "--quality=65-80",
