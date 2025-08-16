@@ -14,19 +14,27 @@ sql="SELECT
            distinct
            hashtags.name separator \";\"
          ) AS hashtag_names
-       FROM
-         (SELECT hashtag_id, repot_id FROM repot_hashtag_relationships WHERE is_active = 1) AS R
+       FROM (
+         SELECT hashtag_id, repot_id FROM repot_hashtag_relationships WHERE is_active = 1
+           UNION
+         SELECT hashtag_id, repot_id FROM repot_community_hashtag_relationships WHERE is_active = 1
+       ) AS R
        INNER JOIN
          hashtags ON R.hashtag_id = hashtags.id
        GROUP BY
          repot_id
      ) AS H ON repots.id = H.repot_id
      WHERE
-       id in (
-         SELECT repot_id FROM repot_hashtag_relationships WHERE is_active = 1 AND hashtag_id = ${target}
-       ) AND
-       deleted_at IS NULL
-;"
+       repots.id in (
+         SELECT repot_id
+         FROM (
+           SELECT repot_id, hashtag_id FROM repot_hashtag_relationships WHERE is_active = 1
+             UNION
+           SELECT repot_id, hashtag_id FROM repot_community_hashtag_relationships WHERE is_active = 1
+         ) AS R2
+         WHERE R2.hashtag_id = ${target}
+       )
+       AND repots.deleted_at IS NULL;"
 sql=`echo ${sql} | tr -d '\n'`
 echo "sql: ${sql}"
 docker compose exec -T mysql bash -c "mysql --defaults-extra-file=/tmp/backup/mysql.cnf \$MYSQL_DATABASE -e '${sql}' > /tmp/archive/${target}.tsv"
