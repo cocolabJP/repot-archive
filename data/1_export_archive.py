@@ -10,7 +10,8 @@ import datetime
 ### v1 データ（変換済み）と v2 データを統合した、アーカイブ生成コード
 
 # この日以降のみをデータ圧縮などの対象にする
-target_period_from = datetime.date(2010, 7, 23)
+target_period_from = datetime.date(2010, 1, 1)
+target_period_to   = datetime.date(2020, 1, 1)
 
 df_hashtags = pd.read_csv("archive_list.csv")
 print(df_hashtags)
@@ -134,7 +135,7 @@ for row in df_hashtags.itertuples():
         subprocess.call(["rsync", "-u", "v1_photo/" + df_row.filename, "archive_photo/"])
         photo_path = "archive_photo/" + df_row.filename
         photo_date = datetime.datetime.strptime(df_row.filename[0:8], "%Y%m%d").date()
-        if photo_date > target_period_from:
+        if photo_date > target_period_from and photo_date < target_period_to:
           print("--> process photo data: ", df_row.filename)
           check_photo_extension_and_format(photo_path)
           resize_photo(photo_path)
@@ -168,7 +169,7 @@ for row in df_hashtags.itertuples():
           remote_url = 'https://repot.sokendo.studio/uploads/original/' + df_row.filename
           urllib.request.urlretrieve(remote_url, photo_path)
         subprocess.call(["rsync", "-u", photo_path, "archive_photo/"])
-        if photo_date > target_period_from:
+        if photo_date > target_period_from and photo_date < target_period_to:
           print("\n--> process photo data: ", df_row.filename)
           # 以下、ファイルサイズ削減処理
           photo_path = "archive_photo/" + df_row.filename
