@@ -11,7 +11,7 @@ import datetime
 
 # この日以降のみをデータ圧縮などの対象にする
 target_period_from = datetime.date(2010, 1, 1)
-target_period_to   = datetime.date(2020, 1, 1)
+target_period_to   = datetime.date(2026, 1, 1)
 
 df_hashtags = pd.read_csv("archive_list.csv")
 print(df_hashtags)
