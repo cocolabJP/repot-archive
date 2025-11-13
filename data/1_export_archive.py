@@ -10,7 +10,7 @@ import datetime
 ### v1 データ（変換済み）と v2 データを統合した、アーカイブ生成コード
 
 # この日以降のみをデータ圧縮などの対象にする
-target_period_from = datetime.date(2025, 10, 8)
+target_period_from = datetime.date(2025, 11, 10)
 target_period_to   = datetime.date(2026, 1, 1)
 
 df_hashtags = pd.read_csv("archive_list.csv")
