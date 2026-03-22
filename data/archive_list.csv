@@ -3,9 +3,9 @@
 508,150,hanasaku,花咲,default,40,50,20,50,0,-25
 -1,118,autumnLeaves,紅葉,default,40,50,20,50,0,-25
 702,5,pxky,pxky,pxky,40,50,20,50,0,-25
--1,303,brailleBlock,点字ブロック,default,40,50,20,50,0,-25
+-1,303,brailleBlock,点字ブロック,braille-block,40,40,20,20,0,0
 700,13,localGourmet,ご当地グルメ,default,40,50,20,50,0,-25
--1,42,udon,うどん,default,40,50,20,50,0,-25
+-1,42,udon,うどん,udon,40,40,20,20,0,0
 776,50,opendataIceCream,オープンデータソフトクリーム,ice-cream,32,50,16,50,0,-25
 685,3,chushikokuSakana,中四国魚,default,40,50,20,50,0,-25
 -1,4,komaruKurage,困クラゲ,default,40,50,20,50,0,-25
