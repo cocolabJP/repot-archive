@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;600&family=Noto+Serif+JP:wght@300;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-<link rel="stylesheet" href="static/css/style.css?v=2.3">
+<link rel="stylesheet" href="static/css/style.css?v=2.4">
 </head>
 <body>
 <div id="app">
@@ -70,6 +70,7 @@
                @click="showInMap(repot.slug)">
           <time>${ getDatetimeStr(repot.timestamp) }</time>
           <ul class="hashtags">
+            <li v-if="!validateLocation(repot)" class="missing-location ic"></li>
             <li v-if="repot.caution_flag" class="caution">利用上の注意</li>
             <li v-for="h in repot.hashtag_names">${ h }</li>
           </ul>
@@ -149,7 +150,7 @@
 </dialog>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
-<script type="module" src="data/archives.js?v=2.3" type="text/javascript" charset="UTF-8"></script>
-<script type="module" src="static/js/main.js?v=2.3" type="text/javascript" charset="UTF-8"></script>
+<script type="module" src="data/archives.js?v=2.4" type="text/javascript" charset="UTF-8"></script>
+<script type="module" src="static/js/main.js?v=2.4" type="text/javascript" charset="UTF-8"></script>
 </body>
 </html>

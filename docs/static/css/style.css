@@ -280,6 +280,17 @@ a:hover {
 .list-view ul.hashtags li.caution {
   background: rgba(255, 255, 0, 0.8);
 }
+.list-view ul.hashtags li.missing-location {
+  background: rgba(255, 63, 63, 0.8);
+  color: white;
+}
+.list-view ul.hashtags li.missing-location.ic:before {
+  content: "location_off";
+  top: 2px;
+  padding-right: 0px;
+  font-size: 0.9rem;
+  line-height: 0.7rem;
+}
 
 
 .summary {

@@ -129,6 +129,9 @@ var app = new Vue({
       this.putMarkers();
       setTimeout(() => lazyload(), 500);
     },
+    validateLocation(repot) {
+      return Math.abs(repot.location_lat) > 1 || Math.abs(repot.location_lng) > 1;
+    },
     putMarkers() {
       if(this.layer != null) {
         this.map.removeLayer(this.layer);
@@ -138,35 +141,40 @@ var app = new Vue({
       this.markers = {};
       for(let i=0; i<tgtArchive.length; i++) {
         let tgtHashtag = this.hashtag.list[this.hashtag.selected];
-        let m = L.marker([tgtArchive[i].location_lat, tgtArchive[i].location_lng], {
-                  icon: L.icon({
-                      iconUrl: 'static/img/icon/' + tgtHashtag.icon.name + '.svg',
-                      iconSize: tgtHashtag.icon.size,
-                      iconAnchor: tgtHashtag.icon.anchor,
-                  }),
-                  repotSlug: tgtArchive[i].slug,
-                }).bindPopup(L.popup({
-                  'content': '<img class="lazyload" src="static/img/loading-photo.png" data-src="' + this.getPhotoURL(tgtArchive[i]) + '">'
-                              + ((tgtArchive[i].caption) != null ? '<p>' + tgtArchive[i].caption + '</p>' : '')
-                              + '<ul>'
-                                  + '<li>' + tgtHashtag.name + '</li>'
-                                  + ((tgtArchive[i].hashtag_names.length > 0) ? '<li>' + tgtArchive[i].hashtag_names.join('</li><li>') + '</li>' : '')
-                              + '</ul>',
-                  'offset': tgtHashtag.icon.popup,
-                })).on('click', (e) => {
-                  this.showInList(e.target.options.repotSlug);
-                });
-        this.markers[tgtArchive[i].slug] = m;
-        this.layer.addLayer(m);
+        if(this.validateLocation(tgtArchive[i])) {
+          // 位置情報が欠損している場合はスキップ
+          let m = L.marker([tgtArchive[i].location_lat, tgtArchive[i].location_lng], {
+                    icon: L.icon({
+                        iconUrl: 'static/img/icon/' + tgtHashtag.icon.name + '.svg',
+                        iconSize: tgtHashtag.icon.size,
+                        iconAnchor: tgtHashtag.icon.anchor,
+                    }),
+                    repotSlug: tgtArchive[i].slug,
+                  }).bindPopup(L.popup({
+                    'content': '<img class="lazyload" src="static/img/loading-photo.png" data-src="' + this.getPhotoURL(tgtArchive[i]) + '">'
+                                + ((tgtArchive[i].caption) != null ? '<p>' + tgtArchive[i].caption + '</p>' : '')
+                                + '<ul>'
+                                    + '<li>' + tgtHashtag.name + '</li>'
+                                    + ((tgtArchive[i].hashtag_names.length > 0) ? '<li>' + tgtArchive[i].hashtag_names.join('</li><li>') + '</li>' : '')
+                                + '</ul>',
+                    'offset': tgtHashtag.icon.popup,
+                  })).on('click', (e) => {
+                    this.showInList(e.target.options.repotSlug);
+                  });
+          this.markers[tgtArchive[i].slug] = m;
+          this.layer.addLayer(m);
+        }
       }
       this.map.addLayer(this.layer)
     },
     showInMap(repotSlug) {
-      this.map.flyTo([this.markers[repotSlug].getLatLng().lat, this.markers[repotSlug].getLatLng().lng], this.map.getZoom(), {
-        animate: true,
-        duration: 1.5
-      });
-      this.markers[repotSlug].fire('click');
+      if(repotSlug in this.markers) {
+        this.map.flyTo([this.markers[repotSlug].getLatLng().lat, this.markers[repotSlug].getLatLng().lng], this.map.getZoom(), {
+          animate: true,
+          duration: 1.5
+        });
+        this.markers[repotSlug].fire('click');
+      }
     },
     showInList(repotSlug) {
       let y = $("list-" + repotSlug).offsetTop;

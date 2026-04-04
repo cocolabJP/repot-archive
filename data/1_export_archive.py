@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # -----------------------------
 # 設定
 # -----------------------------
-TARGET_PERIOD_FROM = "20260401"
+TARGET_PERIOD_FROM = "20260301"
 TARGET_PERIOD_TO   = "20261231"
 
 ARCHIVE_LIST_CSV = Path("archive_list.csv")
