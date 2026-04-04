@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # -----------------------------
 # 設定
 # -----------------------------
-TARGET_PERIOD_FROM = "20260301"
+TARGET_PERIOD_FROM = "20260401"
 TARGET_PERIOD_TO   = "20261231"
 
 ARCHIVE_LIST_CSV = Path("archive_list.csv")
@@ -145,18 +145,25 @@ def process_photo(photo_path: Path, thumbnail_path: Path):
 
     try:
         with Image.open(photo_path) as img:
-            original_format = img.format or ""
-            real_fmt = "." + original_format.lower().replace("e", "") if original_format else ext
+            img.load()
+
+            original_format = (img.format or "").upper()
+            if original_format == "PNG":
+                real_fmt = ".png"
+            elif original_format == "JPEG":
+                real_fmt = ".jpg"
+            else:
+                real_fmt = ext
 
             changed = False
 
-            # フォーマット補正
+            # フォーマット補正（拡張子ではなく実体フォーマット基準で保存）
             if ext != real_fmt:
                 logging.info("format mismatch: %s ext=%s real=%s", photo_path.name, ext, real_fmt)
-                if ext == ".png":
+                if real_fmt == ".png":
                     img.save(photo_path, format="PNG", optimize=True)
                     changed = True
-                elif ext in [".jpg", ".jpeg"]:
+                elif real_fmt in [".jpg", ".jpeg"]:
                     img = img.convert("RGB")
                     img.save(photo_path, format="JPEG", quality=80, optimize=True, progressive=True)
                     changed = True
@@ -165,7 +172,7 @@ def process_photo(photo_path: Path, thumbnail_path: Path):
             current_size = img.size
             if current_size[0] > MAX_IMAGE_SIZE[0] or current_size[1] > MAX_IMAGE_SIZE[1]:
                 img.thumbnail(MAX_IMAGE_SIZE)
-                if ext == ".png":
+                if real_fmt == ".png":
                     img.save(photo_path, format="PNG", optimize=True)
                 else:
                     img = img.convert("RGB")
@@ -178,7 +185,7 @@ def process_photo(photo_path: Path, thumbnail_path: Path):
             thumb.thumbnail(THUMB_SIZE)
             thumbnail_path.parent.mkdir(parents=True, exist_ok=True)
 
-            if ext == ".png":
+            if real_fmt == ".png":
                 thumb.save(thumbnail_path, format="PNG", optimize=True)
             else:
                 thumb = thumb.convert("RGB")
@@ -238,7 +245,6 @@ def write_archive_js(slug: str, json_archive: str):
             f"const archive_{slug} = {json_archive};\n"
             f"export default archive_{slug};"
         )
-
 
 def predownload_v2_photos(df_v2: pd.DataFrame):
     jobs = []
