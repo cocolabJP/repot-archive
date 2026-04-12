@@ -86,14 +86,19 @@ var app = new Vue({
       $("about").close();
     },
     showPeriodSettingDialog() {
+      $("form-period-from").value = this.getDateInputValue(this.period.from);
+      $("form-period-to").value = this.getDateInputValue(this.period.to);
       $("period-setting").showModal();
     },
     dismissPeriodSettingDialog() {
       $("period-setting").close();
     },
     setPeriod() {
-      this.period.from = new Date($("form-period-from").value);
-      this.period.to = new Date($("form-period-to").value);
+      this.period.from = new Date($("form-period-from").value + "T00:00:00");
+      this.period.to = new Date($("form-period-to").value + "T23:59:59");
+      if(this.hashtag.selected != null && this.map != null) {
+        this.putMarkers();
+      }
       this.dismissPeriodSettingDialog();
     },
     checkPeriod(timestamp) {
@@ -141,7 +146,7 @@ var app = new Vue({
       this.markers = {};
       for(let i=0; i<tgtArchive.length; i++) {
         let tgtHashtag = this.hashtag.list[this.hashtag.selected];
-        if(this.validateLocation(tgtArchive[i])) {
+        if(this.validateLocation(tgtArchive[i]) && this.checkPeriod(tgtArchive[i].timestamp)) {
           // 位置情報が欠損している場合はスキップ
           let m = L.marker([tgtArchive[i].location_lat, tgtArchive[i].location_lng], {
                     icon: L.icon({
@@ -193,6 +198,11 @@ var app = new Vue({
            + ("0" + (dt.getMonth()+1)).slice(-2) + "/"
            + ("0" + dt.getDate()).slice(-2);
     },
+    getDateInputValue(dt) {
+      return dt.getFullYear() + "-"
+           + ("0" + (dt.getMonth()+1)).slice(-2) + "-"
+           + ("0" + dt.getDate()).slice(-2);
+    },
     getPhotoURL(repot) {
       return PHOTO_URL_BASE + repot.filename
     },
@@ -210,7 +220,7 @@ var app = new Vue({
     },
     displayTo: function() {
       let dt = new Date(this.archives[this.hashtag.selected][0].timestamp * 1000);
-      dt = (dt > this.period.to) ? this.period.from : dt;
+      dt = (dt > this.period.to) ? this.period.to : dt;
       return this.getDateStr(dt);
     }
 

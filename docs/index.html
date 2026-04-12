@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;600&family=Noto+Serif+JP:wght@300;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-<link rel="stylesheet" href="static/css/style.css?v=2.4">
+<link rel="stylesheet" href="static/css/style.css?v=2.5">
 </head>
 <body>
 <div id="app">
@@ -48,7 +48,7 @@
       <h2 class="ic">${ hashtag.list[hashtag.selected].name }</h2>
       <ul>
         <li>レポっと数： ${ archives[hashtag.selected].length }</li>
-        <li @click="showPeriodSettingDialog">表示期間： ${ displayFrom } 〜 ${ displayTo }</li>
+        <li @click="showPeriodSettingDialog" class="shown-period">表示期間： ${ displayFrom } 〜 ${ displayTo }</li>
       </ul>
     </div>
   </div>
@@ -87,9 +87,9 @@
       <span @click.stop="dismissPeriodSettingDialog();" class="ic">閉じる</span>
     </header>
     <div class="period-form">
-      <input type="text" name="form-period-from" id="form-period-from">
+      <input type="date" name="form-period-from" id="form-period-from">
       〜
-      <input type="text" name="form-period-to" id="form-period-to">
+      <input type="date" name="form-period-to" id="form-period-to">
       <span class="form-set-period" @click.stop="setPeriod();">決定</span>
     </div>
   </article>
@@ -150,7 +150,7 @@
 </dialog>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
-<script type="module" src="data/archives.js?v=2.4" type="text/javascript" charset="UTF-8"></script>
-<script type="module" src="static/js/main.js?v=2.4" type="text/javascript" charset="UTF-8"></script>
+<script type="module" src="data/archives.js?v=2.5" type="text/javascript" charset="UTF-8"></script>
+<script type="module" src="static/js/main.js?v=2.5" type="text/javascript" charset="UTF-8"></script>
 </body>
 </html>

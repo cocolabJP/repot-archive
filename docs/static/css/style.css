@@ -328,6 +328,9 @@ a:hover {
   line-height: 40px;
   padding: 0 15px;
 }
+.summary ul li.shown-period {
+  cursor: pointer;
+}
 
 .leaflet-popup-content-wrapper {
   border-radius: 6px;
