@@ -93,6 +93,15 @@ var app = new Vue({
     dismissPeriodSettingDialog() {
       $("period-setting").close();
     },
+    refreshLazyload() {
+      this.$nextTick(() => {
+        setTimeout(() => {
+          if (typeof lazyload === 'function') {
+            lazyload();
+          }
+        }, 0);
+      });
+    },
     setPeriod() {
       this.period.from = new Date($("form-period-from").value + "T00:00:00");
       this.period.to = new Date($("form-period-to").value + "T23:59:59");
@@ -100,6 +109,23 @@ var app = new Vue({
         this.putMarkers();
       }
       this.dismissPeriodSettingDialog();
+      this.refreshLazyload();
+    },
+    setPeriodYear(year) {
+      $("form-period-from").value = `${year}-01-01`;
+      $("form-period-to").value = `${year}-12-31`;
+      this.setPeriod();
+    },
+    setPeriodAll() {
+      if(this.hashtag.selected == null || !this.archives[this.hashtag.selected] || this.archives[this.hashtag.selected].length === 0) {
+        return;
+      }
+      let tgtArchive = this.archives[this.hashtag.selected];
+      let first = new Date(tgtArchive[tgtArchive.length - 1].timestamp * 1000);
+      let last = new Date(tgtArchive[0].timestamp * 1000);
+      $("form-period-from").value = this.getDateInputValue(first);
+      $("form-period-to").value = this.getDateInputValue(last);
+      this.setPeriod();
     },
     checkPeriod(timestamp) {
       let dt = new Date(timestamp * 1000);
@@ -122,8 +148,8 @@ var app = new Vue({
           attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://repot-archive.cocolab.jp/">repot</a> contributors, <a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a>',
           maxZoom: 19,
         }).addTo(this.map);
-        this.map.on('popupopen', function(e) {
-          lazyload();
+        this.map.on('popupopen', () => {
+          this.refreshLazyload();
         });
       }, 500);
     },
@@ -132,7 +158,7 @@ var app = new Vue({
       this.period.to = new Date();
       this.hashtag.selected = hashtag;
       this.putMarkers();
-      setTimeout(() => lazyload(), 500);
+      this.refreshLazyload();
     },
     validateLocation(repot) {
       return Math.abs(repot.location_lat) > 1 || Math.abs(repot.location_lng) > 1;
@@ -213,6 +239,22 @@ var app = new Vue({
     isListMode:  function() { return this.isBothMode || this.view.selected == 'list'; },
     mapWidth:    function() { return this.isBothMode ? ((this.view.ww - 180) * this.view.divideRatio) + 'px' : '100%'; },
     listWidth:   function() { return this.isBothMode ? ((this.view.ww - 180) * (1 - this.view.divideRatio)) + 'px' : '100%'; },
+    displayCount: function() {
+      if(this.hashtag.selected == null || !this.archives[this.hashtag.selected]) {
+        return 0;
+      }
+      return this.archives[this.hashtag.selected].filter((repot) => this.checkPeriod(repot.timestamp)).length;
+    },
+    periodYears: function() {
+      if(this.hashtag.selected == null || !this.archives[this.hashtag.selected]) {
+        return [];
+      }
+      let years = new Set();
+      this.archives[this.hashtag.selected].forEach((repot) => {
+        years.add(new Date(repot.timestamp * 1000).getFullYear());
+      });
+      return Array.from(years).sort((a, b) => b - a);
+    },
     displayFrom: function() {
       let dt = new Date(this.archives[this.hashtag.selected][this.archives[this.hashtag.selected].length - 1].timestamp * 1000);
       dt = (dt < this.period.from) ? this.period.from : dt;

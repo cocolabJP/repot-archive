@@ -443,12 +443,42 @@ dialog div.period-form input {
   border: 0;
   padding: 10px;
   margin: 0 5px;
+  font-size: 1.2rem;
 }
 dialog span.form-set-period {
   background: #0099cc;
   border-radius: 10px;
-  padding: 10px 20px;
+  padding: 12px 20px;
   color: white;
   font-weight: bold;
   cursor: pointer;
+  font-size: 1.2rem;
+}
+dialog div.period-years {
+  padding: 0 20px 20px;
+}
+dialog div.period-form h2,
+dialog div.period-years h2 {
+  text-align: center;
+  padding: 5px 0 10px;
+}
+dialog div.period-years ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+}
+dialog div.period-years li {
+  list-style: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #eee;
+  cursor: pointer;
+  font-weight: bold;
+}
+dialog div.period-years li:hover {
+  background: #0099cc;
+  color: white;
 }
