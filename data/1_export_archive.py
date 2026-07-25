@@ -155,15 +155,24 @@ def process_photo(photo_path: Path, thumbnail_path: Path):
             else:
                 real_fmt = ext
 
+            # 出力形式はファイル名の拡張子に合わせる。
+            # 例: JPEG実体の *.png はPNGへ変換してからpngquantへ渡す。
+            if ext == ".png":
+                output_fmt = ".png"
+            elif ext in [".jpg", ".jpeg"]:
+                output_fmt = ".jpg"
+            else:
+                output_fmt = real_fmt
+
             changed = False
 
-            # フォーマット補正（拡張子ではなく実体フォーマット基準で保存）
+            # 拡張子と実体が異なる場合、拡張子が示す形式へ変換
             if ext != real_fmt:
                 logging.info("format mismatch: %s ext=%s real=%s", photo_path.name, ext, real_fmt)
-                if real_fmt == ".png":
+                if output_fmt == ".png":
                     img.save(photo_path, format="PNG", optimize=True)
                     changed = True
-                elif real_fmt in [".jpg", ".jpeg"]:
+                elif output_fmt == ".jpg":
                     img = img.convert("RGB")
                     img.save(photo_path, format="JPEG", quality=80, optimize=True, progressive=True)
                     changed = True
@@ -172,7 +181,7 @@ def process_photo(photo_path: Path, thumbnail_path: Path):
             current_size = img.size
             if current_size[0] > MAX_IMAGE_SIZE[0] or current_size[1] > MAX_IMAGE_SIZE[1]:
                 img.thumbnail(MAX_IMAGE_SIZE)
-                if real_fmt == ".png":
+                if output_fmt == ".png":
                     img.save(photo_path, format="PNG", optimize=True)
                 else:
                     img = img.convert("RGB")
@@ -185,7 +194,7 @@ def process_photo(photo_path: Path, thumbnail_path: Path):
             thumb.thumbnail(THUMB_SIZE)
             thumbnail_path.parent.mkdir(parents=True, exist_ok=True)
 
-            if real_fmt == ".png":
+            if output_fmt == ".png":
                 thumb.save(thumbnail_path, format="PNG", optimize=True)
             else:
                 thumb = thumb.convert("RGB")
