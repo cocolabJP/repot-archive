@@ -158,16 +158,17 @@ a:hover {
   position: fixed;
   top: 0;
   left: 180px;
+  display: flex;
+  flex-direction: column;
   height: 100vh;
   width: calc(100vw - 180px);
 }
 
 .view-container {
-  position: fixed;
-  top: 40px;
-  left: 180px;
-  height: calc(100vh - 40px);
-  width: calc(100vw - 180px);
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
 }
 
 .map-view,
@@ -176,7 +177,7 @@ a:hover {
   z-index: 0;
   top: 0;
   left: 0;
-  height: 100vh;
+  height: 100%;
   width: 100%;
 }
 
@@ -185,7 +186,7 @@ a:hover {
   .list-view {
     position: relative;
     float: left;
-    height: 100vh;
+    height: 100%;
     width: 50%;
   }
   .view-divider {
@@ -194,7 +195,7 @@ a:hover {
     left: 0;
     top: 0;
     background: #eee;
-    height: 100vh;
+    height: 100%;
     width: 6px;
     cursor: ew-resize;
   }
@@ -212,7 +213,7 @@ a:hover {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   margin: 0 0 0 6px;
   padding: 5px;
-  height: calc(100vh - 40px);
+  height: 100%;
   overflow-y: auto;
 }
 .list-view > ul > li {
@@ -294,42 +295,144 @@ a:hover {
 
 
 .summary {
-  position: fixed;
+  position: relative;
   z-index: 1;
-  top: 0;
-  right: 0px;
-  left: 180px;
-  height: 40px;
+  container-type: inline-size;
+  flex: 0 0 auto;
+  min-height: 40px;
   padding: 0;
   background: white;
   box-shadow: 1px 1px 3px 0 rgba(0, 0, 0, 0.4);
 }
+.summary > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: space-between;
+  min-height: 40px;
+}
 
 .summary h2 {
-  float: left;
-  margin: 0 15px;
-  line-height: 40px;
+  flex: 1 1 180px;
+  min-width: 0;
+  min-height: 40px;
+  margin: 0;
+  padding: 10px 15px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 .summary h2.ic:before {
   content: "tag";
 }
 .summary ul {
-  float: right;
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: flex-end;
   margin: 0;
   padding: 0;
-  height: 40px;
+  min-height: 40px;
 }
 .summary ul li {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
   list-style: none;
-  float: left;
   border: 1px solid #eee;
   border-width: 0 0 0 1px;
-  height: 40px;
-  line-height: 40px;
+  min-height: 40px;
+  line-height: 1.35;
   padding: 0 15px;
 }
 .summary ul li.shown-period {
   cursor: pointer;
+}
+.summary ul li.shown-period:hover {
+  color: #0099cc;
+  background: #f5f5f5;
+}
+.summary ul li.repot-count .summary-item-label.ic:before {
+  content: "photo_library";
+}
+.summary ul li.shown-period .summary-item-label.ic:before {
+  content: "date_range";
+}
+.summary .summary-item-text {
+  display: flex;
+  align-items: center;
+  column-gap: 0.25em;
+  white-space: nowrap;
+}
+.summary ul li.download-json {
+  padding: 0;
+}
+.summary ul li.download-json a {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  padding: 0 15px;
+  color: #333;
+  font-weight: normal;
+}
+.summary ul li.download-json a:hover {
+  color: #0099cc;
+  background: #f5f5f5;
+}
+.summary ul li.download-json .summary-item-label.ic:before {
+  content: "download";
+}
+@media only screen and (max-width: 1200px) {
+  .summary ul li.repot-count .summary-item-text,
+  .summary ul li.download-json .summary-item-text,
+  .summary ul li.shown-period .summary-item-text {
+    flex-direction: column;
+    align-items: center;
+  }
+  .summary ul li.repot-count,
+  .summary ul li.shown-period,
+  .summary ul li.download-json a {
+    align-items: center;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+}
+@container (max-width: 460px) {
+  .summary h2 {
+    flex-basis: 100%;
+  }
+  .summary ul {
+    flex: 1 1 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .summary ul li {
+    justify-content: flex-start;
+    min-height: 40px;
+    padding: 0 15px;
+    border-width: 1px 0 0;
+  }
+  .summary ul li.download-json {
+    padding: 0;
+  }
+  .summary ul li.download-json a {
+    width: 100%;
+    min-height: 40px;
+    padding: 0 15px;
+  }
+  .summary ul li.repot-count,
+  .summary ul li.shown-period,
+  .summary ul li.download-json a {
+    align-items: center;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  .summary ul li.repot-count .summary-item-text,
+  .summary ul li.download-json .summary-item-text,
+  .summary ul li.shown-period .summary-item-text {
+    flex-direction: row;
+    align-items: center;
+  }
 }
 
 .leaflet-popup-content-wrapper {
@@ -365,12 +468,6 @@ a:hover {
 .leaflet-popup-close-button {
   color: white!important;
 }
-.leaflet-bottom {
-  bottom: 40px;
-}
-
-
-
 dialog {
   border: none!important;
   outline: 0px solid transparent;

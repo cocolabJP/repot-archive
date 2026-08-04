@@ -23,6 +23,7 @@ V2_PHOTO_DIR = Path("v2_photo")
 ARCHIVE_PHOTO_DIR = Path("archive_photo")
 ARCHIVE_THUMB_DIR = Path("archive_thumb")
 DOCS_ARCHIVES_DIR = Path("../docs/data/archives")
+DOCS_ARCHIVES_JSON_DIR = Path("../docs/data/json")
 DOCS_ARCHIVES_JS = Path("../docs/data/archives.js")
 
 V2_TSV_BASE_URL = "https://repot.sokendo.studio/static/archive"
@@ -42,12 +43,21 @@ logging.basicConfig(
 # ユーティリティ
 # -----------------------------
 def ensure_dirs():
-    for d in [V2_TSV_DIR, V2_PHOTO_DIR, ARCHIVE_PHOTO_DIR, ARCHIVE_THUMB_DIR, DOCS_ARCHIVES_DIR]:
+    for d in [
+        V2_TSV_DIR,
+        V2_PHOTO_DIR,
+        ARCHIVE_PHOTO_DIR,
+        ARCHIVE_THUMB_DIR,
+        DOCS_ARCHIVES_DIR,
+        DOCS_ARCHIVES_JSON_DIR,
+    ]:
         d.mkdir(parents=True, exist_ok=True)
 
 
-def clear_old_archive_js():
+def clear_old_archive_files():
     for p in DOCS_ARCHIVES_DIR.glob("*.js"):
+        p.unlink()
+    for p in DOCS_ARCHIVES_JSON_DIR.glob("*.json"):
         p.unlink()
 
 
@@ -255,6 +265,13 @@ def write_archive_js(slug: str, json_archive: str):
             f"export default archive_{slug};"
         )
 
+
+def write_archive_json(slug: str, json_archive: str):
+    out_path = DOCS_ARCHIVES_JSON_DIR / f"{slug}.json"
+    with open(out_path, "w", encoding="utf-8") as f:
+        f.write(json_archive + "\n")
+
+
 def predownload_v2_photos(df_v2: pd.DataFrame):
     jobs = []
     for row in df_v2.itertuples(index=False):
@@ -288,7 +305,7 @@ def predownload_v2_photos(df_v2: pd.DataFrame):
 # -----------------------------
 def main():
     ensure_dirs()
-    clear_old_archive_js()
+    clear_old_archive_files()
 
     df_hashtags = pd.read_csv(ARCHIVE_LIST_CSV)
     logging.info("loaded archive list: %d rows", len(df_hashtags))
@@ -371,6 +388,7 @@ def main():
             json_archive = df_archive.to_json(orient="records", force_ascii=False)
 
             write_archive_js(row.slug, json_archive)
+            write_archive_json(row.slug, json_archive)
 
             archive_meta[row.slug] = {
                 "name": row.name,

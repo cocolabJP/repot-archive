@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;600&family=Noto+Serif+JP:wght@300;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-<link rel="stylesheet" href="static/css/style.css?v=2.6">
+<link rel="stylesheet" href="static/css/style.css?v=3.0">
 </head>
 <body>
 <div id="app">
@@ -47,8 +47,28 @@
     <div v-if="hashtag.selected != null">
       <h2 class="ic">${ hashtag.list[hashtag.selected].name }</h2>
       <ul>
-        <li>レポっと数： ${ displayCount }</li>
-        <li @click="showPeriodSettingDialog" class="shown-period">表示期間： ${ displayFrom } 〜 ${ displayTo }</li>
+        <li class="repot-count">
+          <span class="summary-item-text">
+            <span class="summary-item-label ic">レポっと数：</span>
+            <span>${ displayCount }</span>
+          </span>
+        </li>
+        <li class="download-json">
+          <a
+             :href="'data/json/' + hashtag.selected + '.json'"
+             :download="hashtag.selected + '.json'">
+            <span class="summary-item-text">
+              <span class="summary-item-label ic">JSONを</span>
+              <span>ダウンロード</span>
+            </span>
+          </a>
+        </li>
+        <li @click="showPeriodSettingDialog" class="shown-period">
+          <span class="summary-item-text">
+            <span class="summary-item-label ic">表示期間：</span>
+            <span>${ displayFrom } 〜 ${ displayTo }</span>
+          </span>
+        </li>
       </ul>
     </div>
   </div>
@@ -235,7 +255,7 @@
 </dialog>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
-<script type="module" src="data/archives.js?v=2.6" type="text/javascript" charset="UTF-8"></script>
-<script type="module" src="static/js/main.js?v=2.6" type="text/javascript" charset="UTF-8"></script>
+<script type="module" src="data/archives.js?v=3.0" type="text/javascript" charset="UTF-8"></script>
+<script type="module" src="static/js/main.js?v=3.0" type="text/javascript" charset="UTF-8"></script>
 </body>
 </html>

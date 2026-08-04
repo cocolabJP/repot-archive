@@ -190,6 +190,11 @@ var app = new Vue({
       this.hashtag.selected = hashtag;
       this.putMarkers();
       this.refreshLazyload();
+      this.$nextTick(() => {
+        if (this.map) {
+          this.map.invalidateSize();
+        }
+      });
     },
     validateLocation(repot) {
       return Math.abs(repot.location_lat) > 1 || Math.abs(repot.location_lng) > 1;
