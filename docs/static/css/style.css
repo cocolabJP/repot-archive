@@ -377,6 +377,9 @@ dialog {
   padding: 0;
   width: 80%;
   max-width: 600px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #0099cc;
   border-radius: 10px;
 }
 dialog[open] {
@@ -403,8 +406,26 @@ dialog article > header span {
   top: 10px;
   cursor: pointer;
 }
+dialog article > header .updated-at {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+}
 dialog article > div {
   padding: 20px;
+  background: white;
+}
+dialog article > .license-footer {
+  padding: 18px 20px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.8rem;
+  text-align: center;
+}
+dialog article > .license-footer a {
+  color: inherit;
+}
+dialog article > .license-footer a:hover {
+  color: white;
 }
 dialog article h2 {
   font-size: 1.4rem;
@@ -414,10 +435,24 @@ dialog article p + h2 {
   margin: 15px 0 0;
 }
 dialog article h3 {
-  font-size: 1rem;
+  margin: 24px 0 8px;
+  padding-left: 10px;
+  border-left: 4px solid #0099cc;
+  font-size: 1.05rem;
+  color: #333;
 }
 dialog article p + h3 {
-  margin: 15px 0 0;
+  margin-top: 24px;
+}
+dialog article h4 {
+  margin: 16px 0 6px;
+  font-size: 0.95rem;
+  color: #007da6;
+}
+dialog article .citation {
+  margin-top: 12px;
+  padding-left: 12px;
+  border-left: 2px solid #ccc;
 }
 dialog article code {
   display: block;
@@ -429,6 +464,20 @@ dialog article code {
 }
 dialog article code:not(:last-child) {
   margin: 8px 0;
+}
+dialog article pre.bibtex {
+  margin: 8px 0;
+  padding: 10px 15px;
+  overflow-x: auto;
+  background: #eee;
+  border-radius: 10px;
+}
+dialog article pre.bibtex code {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  white-space: pre;
 }
 dialog article > header span:before {
   content: "close";

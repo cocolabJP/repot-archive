@@ -33,14 +33,17 @@ var app = new Vue({
     this.loadPage();
   },
   destroyed: function () {
-    window.removeEventListener('resize', this.updateScreenSize(), false);
+    window.removeEventListener('resize', this.updateScreenSize, false);
+    window.removeEventListener('hashchange', this.checkHash, false);
   },
   methods: {
     loadPage() {
       // 画面の向き変更イベントを登録
       window.addEventListener('resize', this.updateScreenSize);
+      window.addEventListener('hashchange', this.checkHash);
       this.showMap();
       this.checkQueryStrings();
+      this.checkHash();
     },
     checkQueryStrings() {
       var queryStr = window.location.search.slice(1);
@@ -52,6 +55,11 @@ var app = new Vue({
             setTimeout(() => this.setHashtag(queryArr[1]), 1000);
           }
         });
+      }
+    },
+    checkHash() {
+      if (window.location.hash === '#license' && !$('license').open) {
+        this.showLicenseDialog();
       }
     },
     updateScreenSize() {
@@ -145,7 +153,7 @@ var app = new Vue({
           touchZoom:       'center',
         });
         L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://repot-archive.cocolab.jp/">repot</a> contributors, <a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a>',
+          attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://repot-archive.cocolab.jp/#license">repot</a> contributors, <a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a>',
           maxZoom: 19,
         }).addTo(this.map);
         this.map.on('popupopen', () => {
