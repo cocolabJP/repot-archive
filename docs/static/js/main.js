@@ -58,9 +58,20 @@ var app = new Vue({
       }
     },
     checkHash() {
-      if (window.location.hash === '#license' && !$('license').open) {
-        this.showLicenseDialog();
+      let hash = decodeURIComponent(window.location.hash.slice(1));
+      if (hash === 'license') {
+        this.showLicenseDialog(false);
+        return;
       }
+      if ($('license').open) {
+        this.dismissLicenseDialog();
+      }
+      if (hash && Object.keys(this.archives).includes(hash) && this.map) {
+        this.setHashtag(hash, false);
+      }
+    },
+    replaceHash(hash) {
+      window.history.replaceState(null, '', `#${encodeURIComponent(hash)}`);
     },
     updateScreenSize() {
       this.view.wh = window.innerHeight;
@@ -81,8 +92,13 @@ var app = new Vue({
       this.view.isDragging = false;
       if(this.map) { this.map.invalidateSize(); }
     },
-    showLicenseDialog() {
-      $("license").showModal();
+    showLicenseDialog(updateHash = true) {
+      if (updateHash) {
+        this.replaceHash('license');
+      }
+      if (!$("license").open) {
+        $("license").showModal();
+      }
     },
     dismissLicenseDialog() {
       $("license").close();
@@ -159,9 +175,16 @@ var app = new Vue({
         this.map.on('popupopen', () => {
           this.refreshLazyload();
         });
+        this.checkHash();
       }, 500);
     },
-    setHashtag(hashtag) {
+    setHashtag(hashtag, updateHash = true) {
+      if (!Object.keys(this.archives).includes(hashtag)) {
+        return;
+      }
+      if (updateHash) {
+        this.replaceHash(hashtag);
+      }
       this.period.from = new Date("2000-01-01");
       this.period.to = new Date();
       this.hashtag.selected = hashtag;
