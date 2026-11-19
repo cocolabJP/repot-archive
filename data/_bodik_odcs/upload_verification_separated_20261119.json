@@ -1,0 +1,173 @@
+{
+  "date": "2026-11-19",
+  "mode": "upsert",
+  "force": false,
+  "datasets": [
+    {
+      "target": "komaruKurage",
+      "dataset_id": "a08a92b9-b794-4b72-a610-e28d469c7315",
+      "dataset_url": "https://data.bodik.jp/dataset/repot-komaru-kurage",
+      "resource_id": "debd70f2-4bef-471a-af13-4ca801bc7cba",
+      "recordsVerified": 9,
+      "imagesVerified": 9,
+      "images": [
+        {
+          "filename": "20250427113356_7c7ed.png",
+          "resource_id": "5c455b6a-1c0e-4f2d-b36c-1375a7ec8ced",
+          "url": "https://data.bodik.jp/dataset/a08a92b9-b794-4b72-a610-e28d469c7315/resource/5c455b6a-1c0e-4f2d-b36c-1375a7ec8ced/download/20250427113356_7c7ed.png",
+          "sha256": "97b9ac8f92b39ceff13df51cea3979a8fc697696105c8f08ca20d202ff606f71",
+          "size": 1352030
+        },
+        {
+          "filename": "20250530111115_5b6d4.png",
+          "resource_id": "76d992ab-5377-4691-9213-cb2010589d80",
+          "url": "https://data.bodik.jp/dataset/a08a92b9-b794-4b72-a610-e28d469c7315/resource/76d992ab-5377-4691-9213-cb2010589d80/download/20250530111115_5b6d4.png",
+          "sha256": "59487d208feaa87f25bfde1b23cf7fda7ef748b7d4601e4221a504307d4b5316",
+          "size": 373488
+        },
+        {
+          "filename": "20250530111633_98ec1.png",
+          "resource_id": "34cb3b5a-4335-4eff-b2b5-ba6568c2de19",
+          "url": "https://data.bodik.jp/dataset/a08a92b9-b794-4b72-a610-e28d469c7315/resource/34cb3b5a-4335-4eff-b2b5-ba6568c2de19/download/20250530111633_98ec1.png",
+          "sha256": "96ae783210c69dc0b4037f03e69a32fcb720df7937518c0ff2656f60c053ef21",
+          "size": 687699
+        },
+        {
+          "filename": "20250607124818_420d1.png",
+          "resource_id": "d0aceded-c85b-4c3f-9b97-20b1ac3ad92b",
+          "url": "https://data.bodik.jp/dataset/a08a92b9-b794-4b72-a610-e28d469c7315/resource/d0aceded-c85b-4c3f-9b97-20b1ac3ad92b/download/20250607124818_420d1.png",
+          "sha256": "d891467f69d88816d3fd025f097411502fe46b192c3a0f4302a822b9b9a5de4d",
+          "size": 1114134
+        },
+        {
+          "filename": "20250613133035_ad3aa.png",
+          "resource_id": "9f161310-e3ac-4d38-9f2f-85e254f11dc0",
+          "url": "https://data.bodik.jp/dataset/a08a92b9-b794-4b72-a610-e28d469c7315/resource/9f161310-e3ac-4d38-9f2f-85e254f11dc0/download/20250613133035_ad3aa.png",
+          "sha256": "ff2b01d2ba9ca58c3fd3b31d913f1657cf0252f03e01ccd9971ba4ac0393f60f",
+          "size": 1196986
+        },
+        {
+          "filename": "20250613135638_f69ea.png",
+          "resource_id": "3e2b5f8a-3640-416a-9114-84b390f1db35",
+          "url": "https://data.bodik.jp/dataset/a08a92b9-b794-4b72-a610-e28d469c7315/resource/3e2b5f8a-3640-416a-9114-84b390f1db35/download/20250613135638_f69ea.png",
+          "sha256": "3935fb6e144db65586e24a985e5a4821d12bbcc2363b0fa3d8ec1500ab5d65cf",
+          "size": 894155
+        },
+        {
+          "filename": "20250703101431_8bc34.png",
+          "resource_id": "dfa12484-3870-4ecf-baa4-5e70da848f82",
+          "url": "https://data.bodik.jp/dataset/a08a92b9-b794-4b72-a610-e28d469c7315/resource/dfa12484-3870-4ecf-baa4-5e70da848f82/download/20250703101431_8bc34.png",
+          "sha256": "608d0b7ef015b1b861a4b1d53a28243a8e352b48f06d8cd3a383b40b378f8b60",
+          "size": 310102
+        },
+        {
+          "filename": "20250727084707_aef8b.png",
+          "resource_id": "187af436-ebe4-4426-bb0d-e4c4e9ab8ed0",
+          "url": "https://data.bodik.jp/dataset/a08a92b9-b794-4b72-a610-e28d469c7315/resource/187af436-ebe4-4426-bb0d-e4c4e9ab8ed0/download/20250727084707_aef8b.png",
+          "sha256": "18db246049f9f885da0972fabb00f23175fdc5fdf1ea3d298f3748d6f568c555",
+          "size": 2947680
+        },
+        {
+          "filename": "20250729143622_535a7.png",
+          "resource_id": "b5a6e4ee-654a-4a07-9eb8-30ad1ca81f4a",
+          "url": "https://data.bodik.jp/dataset/a08a92b9-b794-4b72-a610-e28d469c7315/resource/b5a6e4ee-654a-4a07-9eb8-30ad1ca81f4a/download/20250729143622_535a7.png",
+          "sha256": "b7c75bbb74d9a0f134fa7004e9197162b4f99e46fee849b4d30085d49c70b9fd",
+          "size": 2305473
+        }
+      ],
+      "skipped": []
+    },
+    {
+      "target": "chushikokuSakana",
+      "dataset_id": "0766a173-bc08-448b-a5e3-5a537b80323a",
+      "dataset_url": "https://data.bodik.jp/dataset/repot-chushikoku-sakana",
+      "resource_id": "2133dba3-2074-41ef-b11d-10f4f47d24ce",
+      "recordsVerified": 10,
+      "imagesVerified": 10,
+      "images": [
+        {
+          "filename": "20240203020644_07962.png",
+          "resource_id": "0b9de1ac-5aed-44a6-88ac-1cc4efee248f",
+          "url": "https://data.bodik.jp/dataset/0766a173-bc08-448b-a5e3-5a537b80323a/resource/0b9de1ac-5aed-44a6-88ac-1cc4efee248f/download/20240203020644_07962.png",
+          "sha256": "3f8fde71585b5cf20b9cecc73b29d013080566fe1715eb3bb97b9cd7fa5a3f2f",
+          "size": 1475637
+        },
+        {
+          "filename": "20240914115540_13c25.png",
+          "resource_id": "74d3b68a-8c78-47e0-a240-08daccac8a4e",
+          "url": "https://data.bodik.jp/dataset/0766a173-bc08-448b-a5e3-5a537b80323a/resource/74d3b68a-8c78-47e0-a240-08daccac8a4e/download/20240914115540_13c25.png",
+          "sha256": "327f9c5c000ba66a3a44ebae85bbe2718084bc55e4da0d1d034d19f597ee007f",
+          "size": 918197
+        },
+        {
+          "filename": "20240917025550_2990e.png",
+          "resource_id": "13b0e152-26eb-4e41-879f-b4ac59de086e",
+          "url": "https://data.bodik.jp/dataset/0766a173-bc08-448b-a5e3-5a537b80323a/resource/13b0e152-26eb-4e41-879f-b4ac59de086e/download/20240917025550_2990e.png",
+          "sha256": "73a0fc33a3bdf33c3b679dd578000c6a82a5ebbcd3c144cf903d49fa4afd284f",
+          "size": 399970
+        },
+        {
+          "filename": "20240929052454_477a9.png",
+          "resource_id": "d2476636-89d1-4443-99ac-915eb2b53e06",
+          "url": "https://data.bodik.jp/dataset/0766a173-bc08-448b-a5e3-5a537b80323a/resource/d2476636-89d1-4443-99ac-915eb2b53e06/download/20240929052454_477a9.png",
+          "sha256": "f2c4db419723d4455db2810edf3f5f5628490d0ef283bed8884c0ae4cefb102a",
+          "size": 800031
+        },
+        {
+          "filename": "20240929052536_f174f.png",
+          "resource_id": "3c636dfd-e7ca-4a77-a6a9-ef35ecf2e4ae",
+          "url": "https://data.bodik.jp/dataset/0766a173-bc08-448b-a5e3-5a537b80323a/resource/3c636dfd-e7ca-4a77-a6a9-ef35ecf2e4ae/download/20240929052536_f174f.png",
+          "sha256": "f7dd72eabbf250bb4d178d890354ca9513338483339cb924605255d290466515",
+          "size": 953906
+        },
+        {
+          "filename": "20241028031831_5dc49.png",
+          "resource_id": "7e61bc76-7e01-4fc0-8b8b-c886b5986912",
+          "url": "https://data.bodik.jp/dataset/0766a173-bc08-448b-a5e3-5a537b80323a/resource/7e61bc76-7e01-4fc0-8b8b-c886b5986912/download/20241028031831_5dc49.png",
+          "sha256": "8912b0e531684103c5ab7a5677578169c6451ea01cd23b4dd896085c6ceb797a",
+          "size": 1291553
+        },
+        {
+          "filename": "20241116074634_232d4.png",
+          "resource_id": "d6bc4125-dc5f-4576-8c21-bdf254a6fd6d",
+          "url": "https://data.bodik.jp/dataset/0766a173-bc08-448b-a5e3-5a537b80323a/resource/d6bc4125-dc5f-4576-8c21-bdf254a6fd6d/download/20241116074634_232d4.png",
+          "sha256": "f12379d7aff8112c99174b505126d5040499a180a6350304faafd3571e770fde",
+          "size": 1535666
+        },
+        {
+          "filename": "20241116112558_fe718.png",
+          "resource_id": "f3dcf1a8-9df6-4642-af65-0667124d5f7e",
+          "url": "https://data.bodik.jp/dataset/0766a173-bc08-448b-a5e3-5a537b80323a/resource/f3dcf1a8-9df6-4642-af65-0667124d5f7e/download/20241116112558_fe718.png",
+          "sha256": "5ee4ae88cb582824a0a9b2db2f0c0d6f6d0e35de190205ce76be03b431c23339",
+          "size": 1198057
+        },
+        {
+          "filename": "20241116112607_83ce5.png",
+          "resource_id": "ef44585f-8f2f-4877-be3c-d16effb401fa",
+          "url": "https://data.bodik.jp/dataset/0766a173-bc08-448b-a5e3-5a537b80323a/resource/ef44585f-8f2f-4877-be3c-d16effb401fa/download/20241116112607_83ce5.png",
+          "sha256": "a00f7aabe40ce065687d2d1a5c756541456a4d10bb3c8fe313537d79ef072c24",
+          "size": 1084154
+        },
+        {
+          "filename": "20241116112617_f728e.png",
+          "resource_id": "90503825-caeb-4f34-b8d3-d994c58e2aac",
+          "url": "https://data.bodik.jp/dataset/0766a173-bc08-448b-a5e3-5a537b80323a/resource/90503825-caeb-4f34-b8d3-d994c58e2aac/download/20241116112617_f728e.png",
+          "sha256": "d0246cea3926bf278dbb1007437dc58d07d97c2a9ee97431d7ec98c34323d2c9",
+          "size": 1207628
+        }
+      ],
+      "skipped": [
+        {
+          "target": "chushikokuSakana",
+          "slug": "20240130222438_2ca20",
+          "reason": "位置情報が欠損（null または -1, -1）"
+        }
+      ]
+    }
+  ],
+  "legacy": {
+    "resource_id": "8732b437-2134-445d-9a6b-461f02743c83",
+    "total": 126,
+    "trialImagesRetained": true
+  }
+}

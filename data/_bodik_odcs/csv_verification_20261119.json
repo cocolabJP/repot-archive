@@ -1,0 +1,24 @@
+[
+  {
+    "target": "komaruKurage",
+    "csv_resource_id": "1c861a5a-2b3d-4252-b973-3a75b35669a5",
+    "url": "https://data.bodik.jp/dataset/a08a92b9-b794-4b72-a610-e28d469c7315/resource/1c861a5a-2b3d-4252-b973-3a75b35669a5/download/komarukurage.csv",
+    "records": 9,
+    "columns": 17,
+    "encoding": "UTF-8 BOM",
+    "sha256": "8478ca4cefef53049d7bc8d0d7c3b5d915de02c0cceb2ea6f1f17c920a5512e0",
+    "jsonMatches": true,
+    "reusable": true
+  },
+  {
+    "target": "chushikokuSakana",
+    "csv_resource_id": "58db4a32-57e4-4416-b648-91f0c1bea5b2",
+    "url": "https://data.bodik.jp/dataset/0766a173-bc08-448b-a5e3-5a537b80323a/resource/58db4a32-57e4-4416-b648-91f0c1bea5b2/download/chushikokusakana.csv",
+    "records": 10,
+    "columns": 17,
+    "encoding": "UTF-8 BOM",
+    "sha256": "6c3d95d05fe5e566e448f7ee20de9189bd28c3ec3a6104520d075f8a39a75bf1",
+    "jsonMatches": true,
+    "reusable": true
+  }
+]

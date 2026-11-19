@@ -1,0 +1,31 @@
+{
+  "source_dataset_id": "4916cc6f-dde9-4e8d-ac40-c87ae33ac99f",
+  "owner_org": "c6e2bbb3-b0eb-4eb8-9f01-917356c5dcf6",
+  "license_id": "cc-by-40-intl",
+  "targets": {
+    "komaruKurage": {
+      "name": "repot-komaru-kurage",
+      "title": "クラゲ_記録_レポっと",
+      "description": "【試行中】\n市民参加型位置情報付き写真収集プラットフォーム「レポっと」に投稿された、「困クラゲ」タグの記録を掲載しています。クラゲの出現状況など、地域の環境変化を把握する際の参考情報として、記録日時、位置情報、コメントおよび投稿写真を公開しています。\n\n出典：レポっと Archives（困クラゲ）\nhttps://repot-archive.cocolab.jp/#komaruKurage\n\n加工内容：公開アーカイブの項目整理、タグ表記の統一、写真と投稿記録の対応付けを行っています。位置情報が欠損した記録は収録対象から除いています。日時はUTCで収録しています。\n\n利用条件：レポっとオープンデータライセンス（CC BY 4.0）に基づきます。クレジット表記等の詳細は出典の利用条件をご確認ください。\nhttps://repot-archive.cocolab.jp/#license\nクレジット：© repot contributors (modified)",
+      "source_url": "https://repot-archive.cocolab.jp/#komaruKurage",
+      "source_tag": "困クラゲ",
+      "tags": ["クラゲ", "位置情報", "気候変動", "レポっと"],
+      "resource_name": "クラゲ_記録_レポっと_投稿データ",
+      "resource_description": "【試行中】\nレポっとの「困クラゲ」タグに対応する投稿記録です。記録日時、緯度・経度、高度、コメント、タグおよび写真URL等を収録しています。日時はUTCです。写真は image_url から取得でき、同じファイル名で投稿記録と対応付けられています。\n出典：レポっと Archives（困クラゲ）\nhttps://repot-archive.cocolab.jp/#komaruKurage",
+      "dataset_id": "a08a92b9-b794-4b72-a610-e28d469c7315",
+      "resource_id": "debd70f2-4bef-471a-af13-4ca801bc7cba"
+    },
+    "chushikokuSakana": {
+      "name": "repot-chushikoku-sakana",
+      "title": "魚情報_記録_レポっと",
+      "description": "【試行中】\n市民参加型位置情報付き写真収集プラットフォーム「レポっと」に投稿された、「中四国魚」タグの記録を掲載しています。魚類等の観察・釣果に関する投稿を、地域の環境変化を把握する際の参考情報として、記録日時、位置情報、コメントおよび投稿写真とともに公開しています。\n\n出典：レポっと Archives（中四国魚）\nhttps://repot-archive.cocolab.jp/#chushikokuSakana\n\n加工内容：公開アーカイブの項目整理、タグ表記の統一、写真と投稿記録の対応付けを行っています。位置情報が欠損した記録は収録対象から除いています。日時はUTCで収録しています。\n\n利用条件：レポっとオープンデータライセンス（CC BY 4.0）に基づきます。クレジット表記等の詳細は出典の利用条件をご確認ください。\nhttps://repot-archive.cocolab.jp/#license\nクレジット：© repot contributors (modified)",
+      "source_url": "https://repot-archive.cocolab.jp/#chushikokuSakana",
+      "source_tag": "中四国魚",
+      "tags": ["魚情報", "釣果", "水産業", "位置情報", "気候変動", "レポっと"],
+      "resource_name": "魚情報_記録_レポっと_投稿データ",
+      "resource_description": "【試行中】\nレポっとの「中四国魚」タグに対応する投稿記録です。記録日時、緯度・経度、高度、コメント、タグおよび写真URL等を収録しています。日時はUTCです。写真は image_url から取得でき、同じファイル名で投稿記録と対応付けられています。\n出典：レポっと Archives（中四国魚）\nhttps://repot-archive.cocolab.jp/#chushikokuSakana",
+      "dataset_id": "0766a173-bc08-448b-a5e3-5a537b80323a",
+      "resource_id": "2133dba3-2074-41ef-b11d-10f4f47d24ce"
+    }
+  }
+}

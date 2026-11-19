@@ -1,0 +1,134 @@
+{
+  "backup": "/Users/yukimat/Dropbox/Work/外部予算/202006_さきがけ/project/レポっと/system-archives/data/_bodik_odcs/metadata_backup_20261119.json",
+  "completed": [
+    {
+      "target": "komaruKurage",
+      "action": "package_patch",
+      "id": "a08a92b9-b794-4b72-a610-e28d469c7315"
+    },
+    {
+      "target": "komaruKurage",
+      "action": "resource_patch",
+      "id": "debd70f2-4bef-471a-af13-4ca801bc7cba"
+    },
+    {
+      "target": "komaruKurage",
+      "action": "resource_patch",
+      "id": "5c455b6a-1c0e-4f2d-b36c-1375a7ec8ced"
+    },
+    {
+      "target": "komaruKurage",
+      "action": "resource_patch",
+      "id": "76d992ab-5377-4691-9213-cb2010589d80"
+    },
+    {
+      "target": "komaruKurage",
+      "action": "resource_patch",
+      "id": "34cb3b5a-4335-4eff-b2b5-ba6568c2de19"
+    },
+    {
+      "target": "komaruKurage",
+      "action": "resource_patch",
+      "id": "d0aceded-c85b-4c3f-9b97-20b1ac3ad92b"
+    },
+    {
+      "target": "komaruKurage",
+      "action": "resource_patch",
+      "id": "9f161310-e3ac-4d38-9f2f-85e254f11dc0"
+    },
+    {
+      "target": "komaruKurage",
+      "action": "resource_patch",
+      "id": "3e2b5f8a-3640-416a-9114-84b390f1db35"
+    },
+    {
+      "target": "komaruKurage",
+      "action": "resource_patch",
+      "id": "dfa12484-3870-4ecf-baa4-5e70da848f82"
+    },
+    {
+      "target": "komaruKurage",
+      "action": "resource_patch",
+      "id": "187af436-ebe4-4426-bb0d-e4c4e9ab8ed0"
+    },
+    {
+      "target": "komaruKurage",
+      "action": "resource_patch",
+      "id": "b5a6e4ee-654a-4a07-9eb8-30ad1ca81f4a"
+    },
+    {
+      "target": "chushikokuSakana",
+      "action": "package_patch",
+      "id": "0766a173-bc08-448b-a5e3-5a537b80323a"
+    },
+    {
+      "target": "chushikokuSakana",
+      "action": "resource_patch",
+      "id": "2133dba3-2074-41ef-b11d-10f4f47d24ce"
+    },
+    {
+      "target": "chushikokuSakana",
+      "action": "resource_patch",
+      "id": "0b9de1ac-5aed-44a6-88ac-1cc4efee248f"
+    },
+    {
+      "target": "chushikokuSakana",
+      "action": "resource_patch",
+      "id": "74d3b68a-8c78-47e0-a240-08daccac8a4e"
+    },
+    {
+      "target": "chushikokuSakana",
+      "action": "resource_patch",
+      "id": "13b0e152-26eb-4e41-879f-b4ac59de086e"
+    },
+    {
+      "target": "chushikokuSakana",
+      "action": "resource_patch",
+      "id": "d2476636-89d1-4443-99ac-915eb2b53e06"
+    },
+    {
+      "target": "chushikokuSakana",
+      "action": "resource_patch",
+      "id": "3c636dfd-e7ca-4a77-a6a9-ef35ecf2e4ae"
+    },
+    {
+      "target": "chushikokuSakana",
+      "action": "resource_patch",
+      "id": "7e61bc76-7e01-4fc0-8b8b-c886b5986912"
+    },
+    {
+      "target": "chushikokuSakana",
+      "action": "resource_patch",
+      "id": "d6bc4125-dc5f-4576-8c21-bdf254a6fd6d"
+    },
+    {
+      "target": "chushikokuSakana",
+      "action": "resource_patch",
+      "id": "f3dcf1a8-9df6-4642-af65-0667124d5f7e"
+    },
+    {
+      "target": "chushikokuSakana",
+      "action": "resource_patch",
+      "id": "ef44585f-8f2f-4877-be3c-d16effb401fa"
+    },
+    {
+      "target": "chushikokuSakana",
+      "action": "resource_patch",
+      "id": "90503825-caeb-4f34-b8d3-d994c58e2aac"
+    }
+  ],
+  "verified": [
+    {
+      "target": "komaruKurage",
+      "resource_id": "debd70f2-4bef-471a-af13-4ca801bc7cba",
+      "records": 9,
+      "dataUnchanged": true
+    },
+    {
+      "target": "chushikokuSakana",
+      "resource_id": "2133dba3-2074-41ef-b11d-10f4f47d24ce",
+      "records": 10,
+      "dataUnchanged": true
+    }
+  ]
+}

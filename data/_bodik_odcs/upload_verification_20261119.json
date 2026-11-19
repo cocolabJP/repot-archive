@@ -1,0 +1,167 @@
+{
+  "date": "2026-11-19",
+  "dataset_id": "4916cc6f-dde9-4e8d-ac40-c87ae33ac99f",
+  "dataset_url": "https://data.bodik.jp/dataset/cscac_modelcase04",
+  "resource_id": "8732b437-2134-445d-9a6b-461f02743c83",
+  "images": [
+    {
+      "filename": "20240203020644_07962.png",
+      "resource_id": "6f9dba3b-517e-47b7-b67f-e1296b309151",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/6f9dba3b-517e-47b7-b67f-e1296b309151/download/20240203020644_07962.png",
+      "size": 1475637,
+      "sha256": "3f8fde71585b5cf20b9cecc73b29d013080566fe1715eb3bb97b9cd7fa5a3f2f",
+      "verified": true
+    },
+    {
+      "filename": "20240914115540_13c25.png",
+      "resource_id": "587cc381-ee92-4cc7-bbb9-8aaa7aef10da",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/587cc381-ee92-4cc7-bbb9-8aaa7aef10da/download/20240914115540_13c25.png",
+      "size": 918197,
+      "sha256": "327f9c5c000ba66a3a44ebae85bbe2718084bc55e4da0d1d034d19f597ee007f",
+      "verified": true
+    },
+    {
+      "filename": "20240917025550_2990e.png",
+      "resource_id": "9b5fba2d-3ed3-42dc-98f6-9253f389b1ea",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/9b5fba2d-3ed3-42dc-98f6-9253f389b1ea/download/20240917025550_2990e.png",
+      "size": 399970,
+      "sha256": "73a0fc33a3bdf33c3b679dd578000c6a82a5ebbcd3c144cf903d49fa4afd284f",
+      "verified": true
+    },
+    {
+      "filename": "20240929052454_477a9.png",
+      "resource_id": "8ddac65d-b225-44d0-bf5f-b7bf3e44217c",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/8ddac65d-b225-44d0-bf5f-b7bf3e44217c/download/20240929052454_477a9.png",
+      "size": 800031,
+      "sha256": "f2c4db419723d4455db2810edf3f5f5628490d0ef283bed8884c0ae4cefb102a",
+      "verified": true
+    },
+    {
+      "filename": "20240929052536_f174f.png",
+      "resource_id": "784dbfd2-6574-4c70-9ab0-fe5ba4c63906",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/784dbfd2-6574-4c70-9ab0-fe5ba4c63906/download/20240929052536_f174f.png",
+      "size": 953906,
+      "sha256": "f7dd72eabbf250bb4d178d890354ca9513338483339cb924605255d290466515",
+      "verified": true
+    },
+    {
+      "filename": "20241028031831_5dc49.png",
+      "resource_id": "6e309025-33c5-42cb-b4a9-b52d44aa6921",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/6e309025-33c5-42cb-b4a9-b52d44aa6921/download/20241028031831_5dc49.png",
+      "size": 1291553,
+      "sha256": "8912b0e531684103c5ab7a5677578169c6451ea01cd23b4dd896085c6ceb797a",
+      "verified": true
+    },
+    {
+      "filename": "20241116074634_232d4.png",
+      "resource_id": "921f1933-1758-4900-9890-e2d828046a27",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/921f1933-1758-4900-9890-e2d828046a27/download/20241116074634_232d4.png",
+      "size": 1535666,
+      "sha256": "f12379d7aff8112c99174b505126d5040499a180a6350304faafd3571e770fde",
+      "verified": true
+    },
+    {
+      "filename": "20241116112558_fe718.png",
+      "resource_id": "b4b55a7f-7266-4480-89e1-620dd90339c3",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/b4b55a7f-7266-4480-89e1-620dd90339c3/download/20241116112558_fe718.png",
+      "size": 1198057,
+      "sha256": "5ee4ae88cb582824a0a9b2db2f0c0d6f6d0e35de190205ce76be03b431c23339",
+      "verified": true
+    },
+    {
+      "filename": "20241116112607_83ce5.png",
+      "resource_id": "b5029d52-dfde-4a41-9ca0-b541cbbf3c0d",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/b5029d52-dfde-4a41-9ca0-b541cbbf3c0d/download/20241116112607_83ce5.png",
+      "size": 1084154,
+      "sha256": "a00f7aabe40ce065687d2d1a5c756541456a4d10bb3c8fe313537d79ef072c24",
+      "verified": true
+    },
+    {
+      "filename": "20241116112617_f728e.png",
+      "resource_id": "ed1a180d-f89d-4baa-9b8a-37b8d03df8ee",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/ed1a180d-f89d-4baa-9b8a-37b8d03df8ee/download/20241116112617_f728e.png",
+      "size": 1207628,
+      "sha256": "d0246cea3926bf278dbb1007437dc58d07d97c2a9ee97431d7ec98c34323d2c9",
+      "verified": true
+    },
+    {
+      "filename": "20250427113356_7c7ed.png",
+      "resource_id": "d1c917c1-a4a9-4129-8bb0-99436c062b0e",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/d1c917c1-a4a9-4129-8bb0-99436c062b0e/download/20250427113356_7c7ed.png",
+      "size": 1352030,
+      "sha256": "97b9ac8f92b39ceff13df51cea3979a8fc697696105c8f08ca20d202ff606f71",
+      "verified": true
+    },
+    {
+      "filename": "20250530111115_5b6d4.png",
+      "resource_id": "8b80e13b-3512-4e0e-88cc-fde7c909fd4d",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/8b80e13b-3512-4e0e-88cc-fde7c909fd4d/download/20250530111115_5b6d4.png",
+      "size": 373488,
+      "sha256": "59487d208feaa87f25bfde1b23cf7fda7ef748b7d4601e4221a504307d4b5316",
+      "verified": true
+    },
+    {
+      "filename": "20250530111633_98ec1.png",
+      "resource_id": "d97c7f0e-fc2e-4198-b27c-47a320355c19",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/d97c7f0e-fc2e-4198-b27c-47a320355c19/download/20250530111633_98ec1.png",
+      "size": 687699,
+      "sha256": "96ae783210c69dc0b4037f03e69a32fcb720df7937518c0ff2656f60c053ef21",
+      "verified": true
+    },
+    {
+      "filename": "20250607124818_420d1.png",
+      "resource_id": "e042a48b-cdf4-42a1-92ff-46f14bc25a1c",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/e042a48b-cdf4-42a1-92ff-46f14bc25a1c/download/20250607124818_420d1.png",
+      "size": 1114134,
+      "sha256": "d891467f69d88816d3fd025f097411502fe46b192c3a0f4302a822b9b9a5de4d",
+      "verified": true
+    },
+    {
+      "filename": "20250613133035_ad3aa.png",
+      "resource_id": "c044ce26-2e2d-435b-8e53-6c3908048989",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/c044ce26-2e2d-435b-8e53-6c3908048989/download/20250613133035_ad3aa.png",
+      "size": 1196986,
+      "sha256": "ff2b01d2ba9ca58c3fd3b31d913f1657cf0252f03e01ccd9971ba4ac0393f60f",
+      "verified": true
+    },
+    {
+      "filename": "20250613135638_f69ea.png",
+      "resource_id": "285da570-c75d-4cce-aa23-1aabda4ffdaa",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/285da570-c75d-4cce-aa23-1aabda4ffdaa/download/20250613135638_f69ea.png",
+      "size": 894155,
+      "sha256": "3935fb6e144db65586e24a985e5a4821d12bbcc2363b0fa3d8ec1500ab5d65cf",
+      "verified": true
+    },
+    {
+      "filename": "20250703101431_8bc34.png",
+      "resource_id": "e46abada-1aab-4608-b7cf-cbba9c06951b",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/e46abada-1aab-4608-b7cf-cbba9c06951b/download/20250703101431_8bc34.png",
+      "size": 310102,
+      "sha256": "608d0b7ef015b1b861a4b1d53a28243a8e352b48f06d8cd3a383b40b378f8b60",
+      "verified": true
+    },
+    {
+      "filename": "20250727084707_aef8b.png",
+      "resource_id": "a3131306-4ed2-488d-868b-621489a6d7b8",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/a3131306-4ed2-488d-868b-621489a6d7b8/download/20250727084707_aef8b.png",
+      "size": 2947680,
+      "sha256": "18db246049f9f885da0972fabb00f23175fdc5fdf1ea3d298f3748d6f568c555",
+      "verified": true
+    },
+    {
+      "filename": "20250729143622_535a7.png",
+      "resource_id": "ab32921e-25d4-42fc-8f1e-7dfad0c18ead",
+      "url": "https://data.bodik.jp/dataset/4916cc6f-dde9-4e8d-ac40-c87ae33ac99f/resource/ab32921e-25d4-42fc-8f1e-7dfad0c18ead/download/20250729143622_535a7.png",
+      "size": 2305473,
+      "sha256": "b7c75bbb74d9a0f134fa7004e9197162b4f99e46fee849b4d30085d49c70b9fd",
+      "verified": true
+    }
+  ],
+  "records": {
+    "planned": 19,
+    "matching": 0,
+    "table_total": 126,
+    "uploaded": false
+  },
+  "status": "画像19枚を登録・取得検証済み。投稿データはread-onlyで拒否。force送信の自動承認レビューも拒否され、追加承認待ち。"
+}
