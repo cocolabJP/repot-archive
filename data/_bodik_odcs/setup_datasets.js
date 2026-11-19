@@ -5,9 +5,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 const { loadConfig, ckanRequest, verifyUniqueId } = require('./upload_to_odcs');
-const { datasetMarker, tableMarker, datasetMetadata, tableMetadata } = require('./metadata');
+const { datasetMarker, tableMarker, datasetMetadata, tableMetadata } = require('./lib/metadata');
 
-const REGISTRY_PATH = path.join(__dirname, 'datasets.json');
+const REGISTRY_PATH = path.join(__dirname, 'config', 'datasets.json');
 const NUMERIC_FIELDS = new Set(['id', 'user_id', 'timestamp', 'lat', 'lon']);
 const FIELDS = ['id', 'user_id', 'slug', 'timestamp', 'lat', 'lon', 'location_alt', 'status',
   'caption', 'tags', 'species', 'filename', 'image_url', 'source', 'created_at', 'updated_at', 'deleted_at']
@@ -30,7 +30,7 @@ async function provision({ send = false, config = loadConfig(process.env), fetch
   registryPath = REGISTRY_PATH, stdout = process.stdout } = {}) {
   const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
   if (!registry.owner_org || !registry.license_id || Object.keys(registry.targets).length !== 2) {
-    throw new Error('datasets.json の組織・ライセンス・送信先2件を確認してください。');
+    throw new Error('config/datasets.json の組織・ライセンス・送信先2件を確認してください。');
   }
   if (!send) {
     stdout.write(`${JSON.stringify({ owner_org: registry.owner_org, license_id: registry.license_id,

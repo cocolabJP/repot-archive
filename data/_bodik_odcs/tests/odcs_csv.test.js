@@ -5,9 +5,9 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { loadConfig, mapRecord, parseArgs, run } = require('./upload_to_odcs');
-const { CSV_FIELDS, serializeCsv, prepareCsvUpload, readCsvRecords, uploadCsv } = require('./odcs_csv');
-const { datasetMarker, csvMetadata } = require('./metadata');
+const { loadConfig, mapRecord, parseArgs, run } = require('../upload_to_odcs');
+const { CSV_FIELDS, serializeCsv, prepareCsvUpload, readCsvRecords, uploadCsv } = require('../lib/odcs_csv');
+const { datasetMarker, csvMetadata } = require('../lib/metadata');
 
 const config = { ...loadConfig({}), apiKey: 'test-only-key' };
 const record = mapRecord({ slug: '20250427113356_7c7ed', timestamp: 1745721236, filename: 'one.png', caption: '日本語, "引用"\n次の行',

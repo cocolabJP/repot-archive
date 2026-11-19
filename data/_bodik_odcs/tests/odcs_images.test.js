@@ -5,8 +5,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { loadConfig, sendPayload, run } = require('./upload_to_odcs');
-const { buildImagePlan, imageReviewPlan } = require('./odcs_images');
+const { loadConfig, sendPayload, run } = require('../upload_to_odcs');
+const { buildImagePlan, imageReviewPlan } = require('../lib/odcs_images');
 
 const config = { ...loadConfig({}), apiKey: 'test-only-key' };
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aV1sAAAAASUVORK5CYII=', 'base64');

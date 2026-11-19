@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { parseArgs, loadConfig, readArchive, stableId, mapRecord, buildPayload, buildUploadPlans, validateDestinations, verifyUniqueId, sendPayload, run } = require('./upload_to_odcs');
+const { parseArgs, loadConfig, readArchive, stableId, mapRecord, buildPayload, buildUploadPlans, validateDestinations, verifyUniqueId, sendPayload, run } = require('../upload_to_odcs');
 
 const config = loadConfig({});
 const post = {

@@ -5,8 +5,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { provision, FIELDS, datasetMarker } = require('./setup_datasets');
-const { loadConfig } = require('./upload_to_odcs');
+const { provision, FIELDS, datasetMarker } = require('../setup_datasets');
+const { loadConfig } = require('../upload_to_odcs');
 
 function fixture() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'odcs-datasets-'));

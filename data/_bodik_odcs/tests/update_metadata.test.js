@@ -5,13 +5,13 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { loadConfig } = require('./upload_to_odcs');
-const { buildMetadataPlans, updateMetadata } = require('./update_metadata');
-const { datasetMarker, tableMarker, readImageMetadata, csvMetadata } = require('./metadata');
-const { prepareImageUploads } = require('./odcs_images');
+const { loadConfig } = require('../upload_to_odcs');
+const { buildMetadataPlans, updateMetadata } = require('../update_metadata');
+const { datasetMarker, tableMarker, readImageMetadata, csvMetadata } = require('../lib/metadata');
+const { prepareImageUploads } = require('../lib/odcs_images');
 
 const config = { ...loadConfig({}), apiKey: 'test-only-key' };
-const owner = JSON.parse(fs.readFileSync(path.join(__dirname, 'datasets.json'), 'utf8')).owner_org;
+const owner = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'config', 'datasets.json'), 'utf8')).owner_org;
 const sink = { write() {} };
 
 function fixture() {
@@ -74,6 +74,9 @@ test('説明文の通常実行は無通信で、公開文には内部の管理�
 
 test('説明と表示名だけを更新し、元データとURLを保ち、再実行・画像再利用ができる', async () => {
   const f = fixture();
+  const directory = path.dirname(f.options.reportPath);
+  f.options.reportPath = path.join(directory, 'reports', 'report.json');
+  f.options.backupPath = path.join(directory, 'reports', 'backups', 'backup.json');
   const plan = f.plans[0];
   const csv = csvMetadata(plan.target, plan.csv, { table_resource_id: plan.table.id, sha256: 'a'.repeat(64) });
   f.state.datasets[0].resources.push({ id: 'existing-csv', package_id: plan.dataset.id, url_type: 'upload', format: 'CSV',
@@ -84,6 +87,7 @@ test('説明と表示名だけを更新し、元データとURLを保ち、再�
     assert.ok(report.completed.every((entry) => entry.id !== 'existing-csv'));
     assert.ok(report.verified.every((entry) => entry.dataUnchanged));
     assert.ok(fs.existsSync(f.options.backupPath));
+    assert.equal(JSON.parse(fs.readFileSync(f.options.reportPath, 'utf8')).backup, f.options.backupPath);
     const posts = f.state.calls.filter((call) => call.method === 'POST').length;
     for (const [index, dataset] of f.state.datasets.entries()) {
       assert.equal(dataset.extras.find((entry) => entry.key === 'custom').value, '保持する値');

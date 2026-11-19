@@ -4,8 +4,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { createHash } = require('node:crypto');
-const { buildImagePlan, prepareImageUploads, uploadImages, attachImageUrls, imageReviewPlan } = require('./odcs_images');
-const { writeCsvPreview, prepareCsvUpload, uploadCsv, writeCsvFile } = require('./odcs_csv');
+const { buildImagePlan, prepareImageUploads, uploadImages, attachImageUrls, imageReviewPlan } = require('./lib/odcs_images');
+const { writeCsvPreview, prepareCsvUpload, uploadCsv, writeCsvFile } = require('./lib/odcs_csv');
 
 const ARCHIVE_DIR = path.resolve(__dirname, '../../docs/data/archives');
 const DEFAULT_RESOURCE_ID = '8732b437-2134-445d-9a6b-461f02743c83';
@@ -44,7 +44,7 @@ function parseArgs(argv) {
 }
 
 function loadConfig(env) {
-  const registry = JSON.parse(fs.readFileSync(path.join(__dirname, 'datasets.json'), 'utf8'));
+  const registry = JSON.parse(fs.readFileSync(path.join(__dirname, 'config', 'datasets.json'), 'utf8'));
   const baseUrl = new URL(env.CKAN_BASE_URL || 'https://data.bodik.jp');
   if (baseUrl.protocol !== 'https:' || baseUrl.username || baseUrl.password || baseUrl.search || baseUrl.hash) {
     throw new Error('CKAN_BASE_URL は認証情報・クエリ・フラグメントを含まない HTTPS URL を指定してください。');

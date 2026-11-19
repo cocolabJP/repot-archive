@@ -7,7 +7,27 @@
 | `docs/data/archives/komaruKurage.js` | [クラゲ_記録_レポっと](https://data.bodik.jp/dataset/repot-komaru-kurage) | `debd70f2-4bef-471a-af13-4ca801bc7cba` |
 | `docs/data/archives/chushikokuSakana.js` | [魚情報_記録_レポっと](https://data.bodik.jp/dataset/repot-chushikoku-sakana) | `2133dba3-2074-41ef-b11d-10f4f47d24ce` |
 
-送信先は [datasets.json](datasets.json) に保存しています。同じデータセットや同じ投稿表を両分類に指定すると停止します。送信時には、投稿表が設定したデータセットに所属することも確認します。
+送信先は [config/datasets.json](config/datasets.json) に保存しています。同じデータセットや同じ投稿表を両分類に指定すると停止します。送信時には、投稿表が設定したデータセットに所属することも確認します。
+
+## フォルダ構成
+
+```text
+_bodik_odcs/
+├── upload_to_odcs.js       # 投稿・画像・CSVのアップロード
+├── setup_datasets.js       # データセットと投稿表の初期作成
+├── update_metadata.js      # 公開用の名称・説明文の更新
+├── lib/                    # 画像・CSV・メタデータの共通処理
+├── config/
+│   └── datasets.json       # 分類別の送信先と公開用設定
+├── tests/                  # 外部通信しないローカルテスト
+├── output/                 # 生成CSV・プレビュー・CSV送信レポート（Git管理対象外）
+├── reports/                # アップロードの検証記録・メタデータ更新レポート
+│   └── backups/            # メタデータ更新前のバックアップ
+├── .env                    # APIトークン（Git管理対象外）
+└── .env.example            # 認証情報のひな形
+```
+
+実行用スクリプトは直下にあり、以降のコマンドはリポジトリのルートから実行します。検証記録やバックアップの保存先はスクリプトの位置から解決します。
 
 ## 認証情報
 
@@ -116,10 +136,10 @@ CSVは既定で `data/_bodik_odcs/output/` に保存します。このフォル�
 | --- | --- |
 | `CKAN_API_KEY` | APIトークン |
 | `CKAN_BASE_URL` | 既定値 `https://data.bodik.jp` |
-| `CKAN_RESOURCE_ID_KOMARU_KURAGE` | クラゲ用投稿表ID。省略時は `datasets.json` |
-| `CKAN_PACKAGE_ID_KOMARU_KURAGE` | クラゲ用データセットID。省略時は `datasets.json` |
-| `CKAN_RESOURCE_ID_CHUSHIKOKU_SAKANA` | 魚用投稿表ID。省略時は `datasets.json` |
-| `CKAN_PACKAGE_ID_CHUSHIKOKU_SAKANA` | 魚用データセットID。省略時は `datasets.json` |
+| `CKAN_RESOURCE_ID_KOMARU_KURAGE` | クラゲ用投稿表ID。省略時は `config/datasets.json` |
+| `CKAN_PACKAGE_ID_KOMARU_KURAGE` | クラゲ用データセットID。省略時は `config/datasets.json` |
+| `CKAN_RESOURCE_ID_CHUSHIKOKU_SAKANA` | 魚用投稿表ID。省略時は `config/datasets.json` |
+| `CKAN_PACKAGE_ID_CHUSHIKOKU_SAKANA` | 魚用データセットID。省略時は `config/datasets.json` |
 | `ODCS_IMAGE_DIR` | ローカル画像ディレクトリ。既定値はスクリプトから見た `../archive_photo` |
 | `ODCS_IMAGE_BASE_URL` | 画像を送らない場合の配信先。既定値 `https://repot-archive.yukimat.jp/photo/` |
 
@@ -127,7 +147,7 @@ CSVは既定で `data/_bodik_odcs/output/` に保存します。このフォル�
 
 ## 初期データセット・投稿表の作成
 
-`setup_datasets.js` は、`datasets.json` に定義した組織・ライセンスで独立した2データセットと投稿表を作ります。既に作成済みなら管理情報を確認して再利用します。同名の管理対象外データセットは変更しません。APIトークンを `datasets.json` に保存しないでください。
+`setup_datasets.js` は、`config/datasets.json` に定義した組織・ライセンスで独立した2データセットと投稿表を作ります。既に作成済みなら管理情報を確認して再利用します。同名の管理対象外データセットは変更しません。APIトークンを `config/datasets.json` に保存しないでください。
 
 ```sh
 # 接続せず作成予定を表示
@@ -140,7 +160,7 @@ node --env-file=data/_bodik_odcs/.env data/_bodik_odcs/setup_datasets.js --send
 
 ## 公開用の名称・説明文を更新する
 
-`datasets.json` の `title`、`description`、`source_url`、`tags`、`resource_name`、`resource_description` が公開用メタデータの元になります。cscacの他事例と同じく、試行中の表示、出典、加工内容、収録項目、利用条件を記載しています。言語は `Japanese`、クレジットは出典に合わせた `© repot contributors (modified)` としています。
+`config/datasets.json` の `title`、`description`、`source_url`、`tags`、`resource_name`、`resource_description` が公開用メタデータの元になります。cscacの他事例と同じく、試行中の表示、出典、加工内容、収録項目、利用条件を記載しています。言語は `Japanese`、クレジットは出典に合わせた `© repot contributors (modified)` としています。
 
 ```sh
 # 接続せず変更予定を確認
@@ -149,22 +169,22 @@ node --env-file=data/_bodik_odcs/.env data/_bodik_odcs/update_metadata.js --dry-
 node --env-file=data/_bodik_odcs/.env data/_bodik_odcs/update_metadata.js --send
 ```
 
-データセットの名称・説明・出典・タグ・追加情報と、投稿表・写真の表示名・説明だけを更新します。データセットURL、リソースID、写真URL、投稿表の内容を維持し、更新前後で確認します。更新前の記載を `metadata_backup_*.json` に、更新結果を [metadata_update_report.json](metadata_update_report.json) に保存します。同じ内容なら再更新はしません。
+データセットの名称・説明・出典・タグ・追加情報と、投稿表・写真の表示名・説明だけを更新します。データセットURL、リソースID、写真URL、投稿表の内容を維持し、更新前後で確認します。更新前の記載を `reports/backups/metadata_backup_*.json` に、更新結果を [reports/metadata_update_report.json](reports/metadata_update_report.json) に保存します。保存先のフォルダがなければ作成します。バックアップの保存先は `--backup /path/to/backup.json` で変更できます。同じ内容なら再更新はしません。
 
 内部の管理用情報は説明欄のHTMLコメントに保持し、公開画面には表示しません。この形式は投稿スクリプトと初期作成スクリプトでも扱うため、説明文の更新後も画像の再利用や投稿表の再確認ができます。
 
 ## 検証・過去の試験記録
 
-2026年11月19日に、クラゲ用へ9件・画像9枚、魚用へ10件・画像10枚を実際に登録しました。表の全項目、画像URLの所属、公開URLから取得した画像のSHA-256を全件確認しています。`force` は使用していません。結果は [分類別の検証記録](upload_verification_separated_20261119.json) に保存しています。
+2026年11月19日に、クラゲ用へ9件・画像9枚、魚用へ10件・画像10枚を実際に登録しました。表の全項目、画像URLの所属、公開URLから取得した画像のSHA-256を全件確認しています。`force` は使用していません。結果は [分類別の検証記録](reports/upload_verification_separated_20261119.json) に保存しています。
 
-同日にCSVもクラゲ9件・魚10件をそれぞれ追加しました。アップロード後のハッシュ一致に加え、CSV標準パーサーで17列・全行を読み直し、JSON投稿表との全項目一致を確認しています。ダウンロードURLと検証結果は [CSV検証記録](csv_verification_20261119.json) に保存しています。
+同日にCSVもクラゲ9件・魚10件をそれぞれ追加しました。アップロード後のハッシュ一致に加え、CSV標準パーサーで17列・全行を読み直し、JSON投稿表との全項目一致を確認しています。ダウンロードURLと検証結果は [CSV検証記録](reports/csv_verification_20261119.json) に保存しています。
 
 ```sh
-node --test data/_bodik_odcs/*.test.js
+node --test data/_bodik_odcs/tests/*.test.js
 ```
 
 ローカルテストは外部に接続せず、分類別の表・画像・送信先の分離、誤送信時の停止、変換、重複検査、画像の再利用、途中失敗後の再実行、データセット作成を検証します。
 
-先行試験では、共通の[ダミーデータセット](https://data.bodik.jp/dataset/cscac_modelcase04)に画像19枚だけを登録しました。投稿データの追加は読み取り専用制限で拒否され、既存126件は変更していません。先行試験の画像は削除せず残しています。当時の記録は [upload_verification_20261119.json](upload_verification_20261119.json) です。
+先行試験では、共通の[ダミーデータセット](https://data.bodik.jp/dataset/cscac_modelcase04)に画像19枚だけを登録しました。投稿データの追加は読み取り専用制限で拒否され、既存126件は変更していません。先行試験の画像は削除せず残しています。当時の記録は [upload_verification_20261119.json](reports/upload_verification_20261119.json) です。
 
 添付の `③_Jellyfish.html` は現在、ポップアップに緯度・経度だけを表示します。画像を画面に表示するには、別途 `image_url` を使う表示処理が必要です。

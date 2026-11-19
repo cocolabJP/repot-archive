@@ -5,7 +5,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 const { loadConfig, buildUploadPlans, ckanRequest } = require('./upload_to_odcs');
-const { datasetMarker, tableMarker, datasetMetadata, tableMetadata, readImageMetadata, csvMetadata, readCsvMetadata, normalizeMetadataText } = require('./metadata');
+const { datasetMarker, tableMarker, datasetMetadata, tableMetadata, readImageMetadata, csvMetadata, readCsvMetadata, normalizeMetadataText } = require('./lib/metadata');
+
+const REPORT_DIR = path.join(__dirname, 'reports');
 
 function buildMetadataPlans(config) {
   return buildUploadPlans(['komaruKurage', 'chushikokuSakana'], config, { uploadImages: true }).map((plan) => ({
@@ -84,7 +86,7 @@ async function prepareUpdates(plans, ownerOrg, request) {
 }
 
 async function updateMetadata({ send = false, config = loadConfig(process.env), fetchImpl = globalThis.fetch,
-  backupPath, reportPath = path.join(__dirname, 'metadata_update_report.json'), stdout = process.stdout, outputPath } = {}) {
+  backupPath, reportPath = path.join(REPORT_DIR, 'metadata_update_report.json'), stdout = process.stdout, outputPath } = {}) {
   const plans = buildMetadataPlans(config);
   if (!send) {
     const json = `${JSON.stringify({ datasets: plans }, null, 2)}\n`;
@@ -93,11 +95,15 @@ async function updateMetadata({ send = false, config = loadConfig(process.env), 
     return plans;
   }
   if (!config.apiKey.trim()) throw new Error('CKAN_API_KEY が未設定です。');
-  const registry = JSON.parse(fs.readFileSync(path.join(__dirname, 'datasets.json'), 'utf8'));
+  const registry = JSON.parse(fs.readFileSync(path.join(__dirname, 'config', 'datasets.json'), 'utf8'));
   const request = (action, params, method = 'GET') => ckanRequest(action, params, config, fetchImpl, method);
   const { updates, snapshots } = await prepareUpdates(plans, registry.owner_org, request);
-  const backup = backupPath || path.join(__dirname, `metadata_backup_${randomUUID()}.json`);
-  if (updates.length) fs.writeFileSync(backup, `${JSON.stringify({ updates, snapshots }, null, 2)}\n`, { flag: 'wx' });
+  const backup = backupPath || path.join(REPORT_DIR, 'backups', `metadata_backup_${randomUUID()}.json`);
+  fs.mkdirSync(path.dirname(reportPath), { recursive: true });
+  if (updates.length) {
+    fs.mkdirSync(path.dirname(backup), { recursive: true });
+    fs.writeFileSync(backup, `${JSON.stringify({ updates, snapshots }, null, 2)}\n`, { flag: 'wx' });
+  }
   const report = { backup: updates.length ? backup : null, completed: [], verified: [] };
   try {
     for (const update of updates) {
