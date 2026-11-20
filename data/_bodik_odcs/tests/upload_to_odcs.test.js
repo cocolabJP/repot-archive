@@ -76,7 +76,7 @@ test('epoch 秒をそのまま保持し、タグ・画像 URL・欠損値を変�
   assert.equal(record.user_id, null);
   assert.equal(record.deleted_at, null);
   assert.equal(record.tags, '#困クラゲ #クラゲ #海');
-  assert.equal(record.image_url, 'https://repot-archive.yukimat.jp/photo/20250427113356_7c7ed.png');
+  assert.equal(record.image_url, 'https://data.cocolab.jp/repot/20250427113356_7c7ed.png');
   const fish = mapRecord({ ...post, hashtag_names: [], caution_flag: true }, 'chushikokuSakana', config);
   assert.equal(fish.tags, '#中四国魚 #魚 #利用上の注意');
   assert.equal(fish.id, record.id);

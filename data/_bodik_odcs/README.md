@@ -141,7 +141,7 @@ CSVは既定で `data/_bodik_odcs/output/` に保存します。このフォル�
 | `CKAN_RESOURCE_ID_CHUSHIKOKU_SAKANA` | 魚用投稿表ID。省略時は `config/datasets.json` |
 | `CKAN_PACKAGE_ID_CHUSHIKOKU_SAKANA` | 魚用データセットID。省略時は `config/datasets.json` |
 | `ODCS_IMAGE_DIR` | ローカル画像ディレクトリ。既定値はスクリプトから見た `../archive_photo` |
-| `ODCS_IMAGE_BASE_URL` | 画像を送らない場合の配信先。既定値 `https://repot-archive.yukimat.jp/photo/` |
+| `ODCS_IMAGE_BASE_URL` | 画像を送らない場合の配信先。既定値 `https://data.cocolab.jp/repot/` |
 
 1つの送信先を両分類で共有する設定は使いません。送信先を上書きする場合は、分類別の投稿表IDとデータセットIDを対で指定してください。
 

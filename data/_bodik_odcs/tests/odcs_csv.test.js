@@ -138,7 +138,7 @@ test('CSVのdry-runは実サーバーに接続せず、分類ごとのプレビ�
     for (const dataset of plan.datasets) {
       assert.ok(fs.existsSync(dataset.csv.preview_path));
       assert.ok(fs.readFileSync(dataset.csv.preview_path, 'utf8').includes('image_url'));
-      assert.ok(!fs.readFileSync(dataset.csv.preview_path, 'utf8').includes('https://repot-archive.yukimat.jp/photo/'));
+      assert.ok(!fs.readFileSync(dataset.csv.preview_path, 'utf8').includes('https://data.cocolab.jp/repot/'));
     }
     assert.throws(() => parseArgs(['--csv-dir', directory]), /一緒に/);
   } finally { fs.rmSync(directory, { recursive: true, force: true }); }

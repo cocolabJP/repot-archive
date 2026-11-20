@@ -20,9 +20,19 @@ function viewer(options = {}) {
       dispatch(type) { for (const fn of listeners.get(type) || []) fn(); },
     };
   };
-  const dialogs = () => ({ open: false, showModal() { this.open = true; }, close() { this.open = false; } });
+  const dialogEvents = [];
+  const dialogs = (id) => ({
+    open: false, opens: 0,
+    showModal() { this.open = true; this.opens++; },
+    close() {
+      if (!this.open) return;
+      this.open = false;
+      dialogEvents.push(() => app.onDialogClose(id));
+    },
+  });
   const elements = {
-    license: dialogs(), about: dialogs(), 'period-setting': dialogs(),
+    license: dialogs('license'), about: dialogs('about'), developer: dialogs('developer'),
+    'period-setting': dialogs('period-setting'),
     'form-period-from': { value: '' }, 'form-period-to': { value: '' },
     'list-new': { getBoundingClientRect: () => ({ top: 500 }) },
   };
@@ -37,8 +47,12 @@ function viewer(options = {}) {
     visualViewport: options.visualViewport ? { ...eventTarget(), ...options.visualViewport } : undefined,
     requestAnimationFrame(fn) { frames.set(++nextFrame, fn); return nextFrame; },
     cancelAnimationFrame(id) { frames.delete(id); },
-    location: { search: '', hash: '' },
-    history: { replaceState(_state, _title, value) { win.location.hash = value; } },
+    location: { pathname: '/viewer/', search: '', hash: '' },
+    history: { replaceState(_state, _title, value) {
+      this.lastURL = value;
+      const url = new URL(value, 'https://example.test' + win.location.pathname + win.location.search + win.location.hash);
+      Object.assign(win.location, { pathname: url.pathname, search: url.search, hash: url.hash });
+    } },
     matchMedia: () => ({ matches: true }),
   };
   const doc = {
@@ -85,6 +99,7 @@ function viewer(options = {}) {
   const pointer = (y, time = 0, id = 7) => ({ clientY: y, timeStamp: time, pointerId: id, isPrimary: true, button: 0, currentTarget: handle });
   return { app, elements, win, list, focus, pointer, frames, destroy,
     flushFrames() { const pending = [...frames.values()]; frames.clear(); pending.forEach((fn) => fn()); },
+    flushDialogEvents() { dialogEvents.splice(0).forEach((fn) => fn()); },
   };
 }
 
@@ -222,6 +237,122 @@ test('従来のハッシュ・クエリ指定・ライセンスURLを維持す�
   assert.equal(app.hashtag.selected, 'jelly');
   win.location.hash = '#%invalid';
   assert.doesNotThrow(() => app.checkHash());
+});
+
+const dialogRoutes = [
+  ['license', 'showLicenseDialog', 'dismissLicenseDialog'],
+  ['about', 'showAboutDialog', 'dismissAboutDialog'],
+  ['developer', 'showDeveloperDialog', 'dismissDeveloperDialog'],
+  ['period-setting', 'showPeriodSettingDialog', 'dismissPeriodSettingDialog'],
+];
+
+test('各ダイアログを開くとURLを更新し、切り替え後も選択データと表示期間を保つ', () => {
+  const { app, win, elements, flushDialogEvents } = viewer();
+  app.setHashtag('fish');
+  app.setPeriodYear(2025);
+  app.selectedSlug = 'summer';
+  for (const [id, show] of dialogRoutes) {
+    app.menus.info = true;
+    app[show]();
+    assert.equal(win.location.hash, '#' + id);
+    assert.equal(app.menus.info, false);
+    assert.equal(app.hashtag.selected, 'fish');
+    assert.equal(app.displayCount, 2);
+    assert.equal(app.selectedSlug, 'summer');
+    for (const [other] of dialogRoutes) assert.equal(elements[other].open, other === id);
+    app[show]();
+    assert.equal(elements[id].opens, 1);
+    flushDialogEvents();
+    assert.equal(win.location.hash, '#' + id);
+  }
+  app.dismissPeriodSettingDialog();
+  assert.equal(win.location.hash, '#fish');
+  assert.equal(app.displayCount, 2);
+});
+
+test('ダイアログURLを直接開け、データセット未選択でも表示期間の入力を初期化できる', () => {
+  for (const [id] of dialogRoutes) {
+    const { app, win, elements } = viewer();
+    win.location.hash = '#' + id;
+    app.checkHash();
+    assert.equal(elements[id].open, true);
+    assert.equal(win.location.hash, '#' + id);
+    assert.equal(app.hashtag.selected, null);
+    if (id === 'period-setting') {
+      assert.equal(elements['form-period-from'].value, '2000-01-01');
+      assert.match(elements['form-period-to'].value, /^\d{4}-\d{2}-\d{2}$/);
+    }
+  }
+});
+
+test('閉じるボタンとEsc相当のcloseイベントでデータセットのURLへ戻る', () => {
+  for (const [id, show, dismiss] of dialogRoutes) {
+    const { app, win, elements, flushDialogEvents } = viewer();
+    app.setHashtag('fish');
+    app.setPeriodYear(2025);
+    app[show]();
+    app[dismiss]();
+    assert.equal(win.location.hash, '#fish');
+    assert.equal(elements[id].open, false);
+    app[show]();
+    elements[id].close();
+    flushDialogEvents();
+    assert.equal(win.location.hash, '#fish');
+    assert.equal(app.displayCount, 2);
+  }
+});
+
+test('ハッシュの変更でダイアログを閉じ、遅れて届くcloseイベントが移動先を上書きしない', () => {
+  const { app, win, elements, flushDialogEvents } = viewer();
+  app.setHashtag('fish');
+  app.showAboutDialog();
+  win.location.hash = '#developer';
+  app.checkHash();
+  flushDialogEvents();
+  assert.equal(elements.about.open, false);
+  assert.equal(elements.developer.open, true);
+  assert.equal(win.location.hash, '#developer');
+  app.map = { invalidateSize() {} };
+  app.putMarkers = () => {};
+  win.location.hash = '#jelly';
+  app.checkHash();
+  flushDialogEvents();
+  assert.equal(elements.developer.open, false);
+  assert.equal(app.hashtag.selected, 'jelly');
+  assert.equal(win.location.hash, '#jelly');
+  app.showLicenseDialog();
+  win.location.hash = '#unknown';
+  app.checkHash();
+  flushDialogEvents();
+  assert.equal(elements.license.open, false);
+  assert.equal(win.location.hash, '#unknown');
+  win.location.hash = '#toString';
+  assert.doesNotThrow(() => app.checkHash());
+});
+
+test('未選択時に閉じるとハッシュのみを除き、パスとクエリ文字列を維持する', () => {
+  const { app, win, elements, flushDialogEvents } = viewer();
+  win.location.search = '?h=fish&embed=1';
+  win.location.hash = '#%61bout';
+  app.checkHash();
+  assert.equal(elements.about.open, true);
+  elements.about.close();
+  flushDialogEvents();
+  assert.equal(win.location.hash, '');
+  assert.equal(win.location.pathname, '/viewer/');
+  assert.equal(win.location.search, '?h=fish&embed=1');
+  assert.equal(win.history.lastURL, '/viewer/?h=fish&embed=1');
+});
+
+test('同じダイアログをすぐ開き直しても、前回のcloseイベントでURLが戻らない', () => {
+  const { app, win, elements, flushDialogEvents } = viewer();
+  app.setHashtag('fish');
+  app.showAboutDialog();
+  app.dismissAboutDialog();
+  app.showAboutDialog();
+  flushDialogEvents();
+  assert.equal(elements.about.open, true);
+  assert.equal(win.location.hash, '#about');
 });
 
 test('1200pxを境にPCとスマホを切り替え、データ・期間・地図インスタンスを保つ', () => {

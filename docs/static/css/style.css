@@ -81,7 +81,6 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .chevron { width: 18px; transition: transform 180ms ease; }
 .is-open .chevron { transform: rotate(180deg); }
 .dataset-options { max-height: min(480px, max(0px, calc(var(--viewport-height) - var(--header-bottom) - var(--safe-bottom) - 12px))); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; border-top: 1px solid #edf0f2; }
-.menu-heading { margin: 0; padding: 12px 14px 6px; color: var(--muted); font-size: 11px; font-weight: 600; }
 .dataset-options ul, .info-panel ul { margin: 0; padding: 4px 6px 8px; list-style: none; }
 .dataset-options li button {
   display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;
@@ -214,6 +213,13 @@ dialog article .citation { margin-top: 12px; padding-left: 12px; border-left: 2p
 dialog article code { display: block; margin: 8px 0; padding: 10px 12px; border-radius: 8px; background: #f0f3f5; font-family: Menlo, Monaco, Consolas, monospace; font-size: 12px; overflow-wrap: anywhere; }
 dialog article pre.bibtex { margin: 8px 0; padding: 10px 12px; overflow-x: auto; border-radius: 8px; background: #f0f3f5; }
 dialog article pre.bibtex code { margin: 0; padding: 0; background: transparent; white-space: pre; }
+.developer-files { margin: 12px 0 20px; }
+.developer-files dt { margin-top: 12px; }
+.developer-files dt code { margin: 0 0 4px; padding: 6px 10px; }
+.developer-files dd { margin: 0; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+dialog article code.inline-code { display: inline; margin: 0; padding: 1px 4px; }
+.developer-command { margin: 12px 0; }
+.developer-command code { margin: 0; white-space: pre-wrap; }
 .period-form h2, dialog div.period-years h2 { margin: 0 0 16px; text-align: center; font-size: 17px; }
 .period-inputs { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: 8px; }
 .period-inputs label { display: flex; flex-direction: column; gap: 6px; min-width: 0; max-width: 100%; color: var(--muted); font-size: 12px; }
@@ -257,7 +263,7 @@ dialog div.period-years { padding: 0 20px 24px; }
   .viewer-main { left: 180px; }
   .view-container { z-index: 0; }
   .desktop-sidebar { display: block; position: absolute; z-index: 30; top: 0; bottom: 0; left: 0; width: 180px; background: white; box-shadow: 1px 1px 3px #0006; }
-  .desktop-sidebar-content { height: calc(100% - 104px); overflow-y: auto; }
+  .desktop-sidebar-content { height: calc(100% - 140px); overflow-y: auto; }
   .desktop-brand { width: 150px; height: 135px; margin: 10px 15px 20px; }
   .desktop-brand img { display: block; width: 100%; height: 100%; object-fit: contain; }
   .desktop-sidebar h2 { position: sticky; top: 0; z-index: 1; margin: 0; padding: 8px 0; background: #eee; text-align: center; font-size: 14px; }
@@ -267,7 +273,7 @@ dialog div.period-years { padding: 0 20px 24px; }
   .desktop-sidebar nav button:hover { background: #09c; color: white; }
   .desktop-sidebar nav button[aria-current="true"] { background: #e33; color: white; }
   .desktop-sidebar nav button[aria-current="true"]::after { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); content: 'double_arrow'; font: 16px/1 'Material Icons Round'; }
-  .desktop-sidebar footer { position: absolute; bottom: 0; width: 100%; height: 104px; padding: 5px 0 12px; border-top: 1px solid #eee; text-align: center; font-size: 11px; }
+  .desktop-sidebar footer { position: absolute; bottom: 0; width: 100%; height: 140px; padding: 5px 0 12px; border-top: 1px solid #eee; text-align: center; font-size: 11px; }
   .desktop-sidebar footer ul { margin: 0; padding: 0 0 6px; list-style: none; }
   .desktop-sidebar footer button { width: 100%; padding: 7px 5px; background: white; }
   .desktop-sidebar footer button:hover { background: #eee; }

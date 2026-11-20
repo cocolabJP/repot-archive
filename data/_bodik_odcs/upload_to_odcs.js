@@ -49,7 +49,7 @@ function loadConfig(env) {
   if (baseUrl.protocol !== 'https:' || baseUrl.username || baseUrl.password || baseUrl.search || baseUrl.hash) {
     throw new Error('CKAN_BASE_URL は認証情報・クエリ・フラグメントを含まない HTTPS URL を指定してください。');
   }
-  const imageBaseUrl = new URL(env.ODCS_IMAGE_BASE_URL || 'https://repot-archive.yukimat.jp/photo/');
+  const imageBaseUrl = new URL(env.ODCS_IMAGE_BASE_URL || 'https://data.cocolab.jp/repot/');
   if (!['https:', 'http:'].includes(imageBaseUrl.protocol) || imageBaseUrl.search || imageBaseUrl.hash) {
     throw new Error('ODCS_IMAGE_BASE_URL は画像ディレクトリの HTTP(S) URL を指定してください。');
   }

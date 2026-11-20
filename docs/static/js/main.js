@@ -1,6 +1,12 @@
 import { HASHTAG_LIST, ARCHIVES } from "../../data/archives.js"
-var PHOTO_URL_BASE = 'https://repot-archive.yukimat.jp/thumb/'
+var PHOTO_URL_BASE = 'https://data.cocolab.jp/repot-thumb/'
 const DESKTOP_MIN_WIDTH = 1200;
+const DIALOG_ACTIONS = {
+  license: 'showLicenseDialog',
+  about: 'showAboutDialog',
+  developer: 'showDeveloperDialog',
+  'period-setting': 'showPeriodSettingDialog',
+};
 const $ = (id) => { return document.getElementById(id); }
 var app = new Vue({
   delimiters: ['${', '}'],
@@ -41,8 +47,8 @@ var app = new Vue({
       ignoreClick: false,
     },
     period: {
-      from: -1,
-      to: -1,
+      from: new Date('2000-01-01'),
+      to: new Date(),
     },
     periodError: '',
   },
@@ -87,23 +93,26 @@ var app = new Vue({
       const target = new URLSearchParams(window.location.search).get('h');
       if (!window.location.hash && target && Object.hasOwn(this.archives, target)) this.setHashtag(target);
     },
+    getHash() {
+      try { return decodeURIComponent(window.location.hash.slice(1)); }
+      catch (_) { return null; }
+    },
     checkHash() {
-      let hash;
-      try { hash = decodeURIComponent(window.location.hash.slice(1)); }
-      catch (_) { return; }
-      if (hash === 'license') {
-        this.showLicenseDialog(false);
+      const hash = this.getHash();
+      if (hash === null) return;
+      if (Object.hasOwn(DIALOG_ACTIONS, hash)) {
+        this[DIALOG_ACTIONS[hash]](false);
         return;
       }
-      if ($('license').open) {
-        this.dismissLicenseDialog();
-      }
+      this.closeDialogs();
       if (hash && Object.keys(this.archives).includes(hash) && this.map) {
         this.setHashtag(hash, false);
       }
     },
     replaceHash(hash) {
-      window.history.replaceState(null, '', `#${encodeURIComponent(hash)}`);
+      window.history.replaceState(null, '', hash
+        ? `#${encodeURIComponent(hash)}`
+        : window.location.pathname + window.location.search);
     },
     queueScreenUpdate() {
       if (this._viewportFrame !== null) return;
@@ -272,34 +281,51 @@ var app = new Vue({
       popup.options.maxHeight = Math.max(80, height - top - bottom - 32);
       popup.update();
     },
-    showLicenseDialog(updateHash = true) {
+    closeDialogs(exceptId = null) {
+      for (const id of Object.keys(DIALOG_ACTIONS)) {
+        if (id !== exceptId && $(id).open) $(id).close();
+      }
+    },
+    showDialog(id, updateHash = true) {
       this.closeMenus();
-      if (updateHash) {
-        this.replaceHash('license');
-      }
-      if (!$("license").open) {
-        $("license").showModal();
-      }
+      if (updateHash) this.replaceHash(id);
+      this.closeDialogs(id);
+      if (!$(id).open) $(id).showModal();
+    },
+    dismissDialog(id) {
+      if ($(id).open) $(id).close();
+      this.onDialogClose(id);
+    },
+    onDialogClose(id) {
+      // Escで閉じた場合もURLを戻す。別の画面へ移動した後のcloseイベントは無視する。
+      if (!$(id).open && this.getHash() === id) this.replaceHash(this.hashtag.selected || '');
+    },
+    showLicenseDialog(updateHash = true) {
+      this.showDialog('license', updateHash);
     },
     dismissLicenseDialog() {
-      $("license").close();
+      this.dismissDialog('license');
     },
-    showAboutDialog() {
-      this.closeMenus();
-      if (!$("about").open) $("about").showModal();
+    showAboutDialog(updateHash = true) {
+      this.showDialog('about', updateHash);
     },
     dismissAboutDialog() {
-      $("about").close();
+      this.dismissDialog('about');
     },
-    showPeriodSettingDialog() {
-      this.closeMenus();
+    showDeveloperDialog(updateHash = true) {
+      this.showDialog('developer', updateHash);
+    },
+    dismissDeveloperDialog() {
+      this.dismissDialog('developer');
+    },
+    showPeriodSettingDialog(updateHash = true) {
       this.periodError = '';
       $("form-period-from").value = this.getDateInputValue(this.period.from);
       $("form-period-to").value = this.getDateInputValue(this.period.to);
-      $("period-setting").showModal();
+      this.showDialog('period-setting', updateHash);
     },
     dismissPeriodSettingDialog() {
-      $("period-setting").close();
+      this.dismissDialog('period-setting');
     },
     refreshLazyload() {
       this.$nextTick(() => {

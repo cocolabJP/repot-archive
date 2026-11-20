@@ -22,7 +22,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-<link rel="stylesheet" href="static/css/style.css?v=5.3">
+<link rel="stylesheet" href="static/css/style.css?v=5.4">
 </head>
 <body>
 <div id="app" v-cloak :class="{'sheet-dragging': sheet.dragging, 'divider-dragging': view.isDragging}"
@@ -43,6 +43,7 @@
     <ul>
       <li><button type="button" @click="showLicenseDialog()">データの利用について</button></li>
       <li><button type="button" @click="showAboutDialog">このシステムについて</button></li>
+      <li><button type="button" @click="showDeveloperDialog" aria-haspopup="dialog" aria-controls="developer">データの使い方</button></li>
     </ul>
     <p>&copy; <a href="https://cocolab.jp/">cocolab.jp</a></p>
   </footer>
@@ -93,10 +94,10 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v.1"/></svg>
     </button>
     <nav id="page-information" class="info-panel" v-show="menus.info" aria-label="ページ情報">
-      <p class="menu-heading">ページ情報</p>
       <ul>
         <li><button type="button" @click="showAboutDialog">このシステムについて</button></li>
         <li><button type="button" @click="showLicenseDialog()">データの利用について</button></li>
+        <li><button type="button" @click="showDeveloperDialog" aria-haspopup="dialog" aria-controls="developer">データの使い方</button></li>
       </ul>
       <p class="copyright">&copy; <a href="https://cocolab.jp/">cocolab.jp</a></p>
     </nav>
@@ -164,7 +165,7 @@
 </section>
 </div>
 </div>
-<dialog id="period-setting" aria-labelledby="period-title" @click.self="dismissPeriodSettingDialog">
+<dialog id="period-setting" aria-labelledby="period-title" @click.self="dismissPeriodSettingDialog" @close="onDialogClose('period-setting')">
   <article>
     <header>
       <h1 id="period-title">表示期間の変更</h1>
@@ -189,7 +190,7 @@
     </div>
   </article>
 </dialog>
-<dialog id="license" aria-labelledby="license-title" @click.stop="dismissLicenseDialog();">
+<dialog id="license" aria-labelledby="license-title" @click.stop="dismissLicenseDialog();" @close="onDialogClose('license')">
   <article @click.stop="">
     <header>
       <h1 id="license-title">データの利用について</h1>
@@ -300,7 +301,7 @@
     </footer>
   </article>
 </dialog>
-<dialog id="about" aria-labelledby="about-title" @click.stop="dismissAboutDialog();">
+<dialog id="about" aria-labelledby="about-title" @click.stop="dismissAboutDialog();" @close="onDialogClose('about')">
   <article @click.stop="">
     <header>
       <h1 id="about-title">レポっとアーカイブについて</h1>
@@ -320,8 +321,82 @@
     </div>
   </article>
 </dialog>
+<dialog id="developer" aria-labelledby="developer-title" @click.self="dismissDeveloperDialog" @close="onDialogClose('developer')">
+  <article>
+    <header>
+      <h1 id="developer-title">データの使い方</h1>
+      <button type="button" @click="dismissDeveloperDialog" class="dialog-close ic">閉じる</button>
+    </header>
+    <div>
+      <h2>JSONデータを取得する</h2>
+      <p>データセットを選び、写真一覧の「JSON」からダウンロードできます。JSONには、そのデータセットで公開されている全期間の投稿が含まれます。画面の表示期間による絞り込みは、ダウンロードするJSONには適用されません。</p>
+      <p>公開URLから直接取得することもできます。データセットを選択し、ダイアログを閉じた状態のページURLで、<code class="inline-code">#</code>以降にある文字列がデータセットIDです。次のURLの<code class="inline-code">komaruKurage</code>を、取得したいIDに置き換えてください。</p>
+      <pre class="developer-command" v-pre><code>https://repot-archive.cocolab.jp/data/json/komaruKurage.json</code></pre>
+      <p>例：<a href="https://repot-archive.cocolab.jp/data/json/komaruKurage.json" target="_blank" rel="noopener">困クラゲのJSONを開く</a></p>
+      <h2>JSONの見方</h2>
+      <p>JSONは、1件の投稿を1つのオブジェクトとする配列です。新しい日時の投稿から順に並びます。困クラゲのデータの1件を例にすると、次のような構成です。</p>
+      <pre class="developer-command" v-pre><code>[
+  {
+    "slug": "20250729143622_535a7",
+    "timestamp": 1753767382,
+    "filename": "20250729143622_535a7.png",
+    "caption": "SO-51A ・ f/1.7 ・ 1/93 ・ ISO64",
+    "location_lat": 34.25955,
+    "location_lng": 133.20004,
+    "location_alt": 0,
+    "location_acc": 0,
+    "hashtag_names": ["fromCameraRoll"],
+    "caution_flag": false
+  }
+]</code></pre>
+      <dl class="developer-files">
+        <dt><code>slug</code></dt><dd>投稿を識別するIDです。</dd>
+        <dt><code>timestamp</code></dt><dd>日時をUNIX時間の秒数で表します。JavaScriptで日付に変換する際は1000倍します。上の例は日本時間の2025年7月29日14時36分22秒です。</dd>
+        <dt><code>filename</code></dt><dd>画像ファイル名です。拡張子を含め、この値をそのまま画像URLに使います。</dd>
+        <dt><code>caption</code></dt><dd>説明文や撮影情報です。情報がない場合はnullです。</dd>
+        <dt><code>location_lat / location_lng</code></dt><dd>緯度・経度</dd>
+        <dt><code>location_alt / location_acc</code></dt><dd>高度・位置精度に関する補足情報です。未取得・不明の値を含みます。</dd>
+        <dt><code>hashtag_names</code></dt><dd>追加のハッシュタグを文字列の配列で表します。データセット自身の名前と「利用上の注意」は省かれています。</dd>
+        <dt><code>caution_flag</code></dt><dd>trueは「利用上の注意」が付いた投稿です。利用前に写真の内容や説明、利用条件を確認してください。</dd>
+      </dl>
+      <p>緯度・経度の組が<code class="inline-code">(-1, -1)</code>または<code class="inline-code">(0, 0)</code>の投稿は、位置情報の欠損値を表します。nullなどの値も確認し、地図への表示や位置の集計では除外してください。</p>
+      <h2>画像にアクセスする</h2>
+      <p>次のURLの末尾に、JSONの<code class="inline-code">filename</code>を付けます。画像を表示する用途にはサムネイル、より大きな画像を取得する用途には元画像のURLを使えます。</p>
+      <dl class="developer-files">
+        <dt>サムネイル</dt><dd><code>https://data.cocolab.jp/repot-thumb/{filename}</code></dd>
+        <dt>元画像</dt><dd><code>https://data.cocolab.jp/repot/{filename}</code></dd>
+      </dl>
+      <p>上の投稿の画像：<a href="https://data.cocolab.jp/repot-thumb/20250729143622_535a7.png" target="_blank" rel="noopener">サムネイルを開く</a> ／ <a href="https://data.cocolab.jp/repot/20250729143622_535a7.png" target="_blank" rel="noopener">元画像を開く</a></p>
+      <p>ブラウザで表示する場合は、画像URLをimg要素のsrcに指定します。</p>
+      <pre class="developer-command" v-pre><code>&lt;img
+  src="https://data.cocolab.jp/repot-thumb/20250729143622_535a7.png"
+  alt="困クラゲの投稿写真"
+&gt;</code></pre>
+      <h2>JavaScriptで取得する例</h2>
+      <p>JSONを取得し、それぞれの投稿に日本時間の日時と画像URLを付ける例です。</p>
+      <pre class="developer-command" v-pre><code>const response = await fetch(
+  "https://repot-archive.cocolab.jp/data/json/komaruKurage.json"
+);
+if (!response.ok) throw new Error("HTTP " + response.status);
+
+const posts = await response.json();
+const items = posts.map(post =&gt; ({
+  ...post,
+  dateJst: new Date(post.timestamp * 1000).toLocaleString(
+    "ja-JP", { timeZone: "Asia/Tokyo" }
+  ),
+  thumbnailURL: "https://data.cocolab.jp/repot-thumb/"
+    + encodeURIComponent(post.filename),
+  photoURL: "https://data.cocolab.jp/repot/"
+    + encodeURIComponent(post.filename)
+}));
+console.log(items);</code></pre>
+      <p>データや写真を公開・加工・再配布する際の利用条件とクレジットの書き方は、「データの利用について」を確認してください。</p>
+    </div>
+  </article>
+</dialog>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.min.js"></script>
-<script type="module" src="static/js/main.js?v=5.1" charset="UTF-8"></script>
+<script type="module" src="static/js/main.js?v=5.6" charset="UTF-8"></script>
 </body>
 </html>
