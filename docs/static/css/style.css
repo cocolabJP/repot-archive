@@ -122,7 +122,6 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   background: white; touch-action: none; cursor: grab; user-select: none;
 }
 .sheet-handle:focus-visible { outline-offset: -4px; border-radius: 22px 22px 0 0; }
-.sheet-handle:hover { background: #f8fafb; }
 .handle-bar { display: block; width: 44px; height: 5px; border-radius: 999px; background: #c7d0d6; }
 .sheet-dragging .photo-sheet { transition: none; }
 .sheet-dragging .sheet-handle { cursor: grabbing; }
@@ -217,9 +216,9 @@ dialog article pre.bibtex { margin: 8px 0; padding: 10px 12px; overflow-x: auto;
 dialog article pre.bibtex code { margin: 0; padding: 0; background: transparent; white-space: pre; }
 .period-form h2, dialog div.period-years h2 { margin: 0 0 16px; text-align: center; font-size: 17px; }
 .period-inputs { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: 8px; }
-.period-inputs label { display: flex; flex-direction: column; gap: 6px; min-width: 0; color: var(--muted); font-size: 12px; }
+.period-inputs label { display: flex; flex-direction: column; gap: 6px; min-width: 0; max-width: 100%; color: var(--muted); font-size: 12px; }
 .period-inputs > span { align-self: center; padding-top: 20px; }
-.period-inputs input { display: block; width: 100%; min-width: 0; min-height: 44px; padding: 8px; border: 1px solid #dde5eb; border-radius: 8px; background: #f4f6f8; color: var(--text); font-size: 16px; }
+.period-inputs input { display: block; box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; min-height: 44px; margin: 0; padding: 8px; appearance: none; -webkit-appearance: none; border: 1px solid #dde5eb; border-radius: 8px; background: #f4f6f8; color: var(--text); font-size: 16px; }
 .form-set-period { display: block; width: 100%; min-height: 44px; margin-top: 16px; padding: 8px 16px; border-radius: 9px; background: var(--accent); color: white; font-weight: 600; }
 .period-error { margin: 12px 0 0; font-size: 12px; color: #bd3030; }
 dialog div.period-years { padding: 0 20px 24px; }
@@ -227,6 +226,10 @@ dialog div.period-years { padding: 0 20px 24px; }
 .period-years li button { min-height: 44px; padding: 8px 14px; border-radius: 999px; background: #edf2f5; font-weight: 600; }
 .period-years li button:hover { background: var(--accent); color: white; }
 
+@media (max-width: 599px) {
+  .period-inputs { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .period-inputs > span { justify-self: center; padding-top: 0; line-height: 1; }
+}
 @media (min-width: 600px) {
   .viewer-header { --header-control-height: 64px; gap: 16px; padding-top: max(16px, var(--safe-top)); padding-left: max(16px, var(--safe-left)); padding-right: max(16px, var(--safe-right)); }
   .brand a { padding: 6px; }
