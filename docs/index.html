@@ -2,8 +2,10 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
 <title>レポっと Archives</title>
+<link rel="icon" type="image/png" href="static/img/archives-logo.png">
 <!-- Reset CSS -->
 <link rel="stylesheet" href="https://unpkg.com/modern-css-reset/dist/reset.min.css" />
 <!-- Leaflet -->
@@ -18,116 +20,181 @@
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;600&family=Noto+Serif+JP:wght@300;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-<link rel="stylesheet" href="static/css/style.css?v=3.0">
+<link rel="stylesheet" href="static/css/style.css?v=5.0">
 </head>
 <body>
-<div id="app">
-<div class="side-nav">
-  <div>
-    <h1><span>レポっと Archives</span></h1>
+<div id="app" v-cloak :class="{'sheet-dragging': sheet.dragging, 'divider-dragging': view.isDragging}"
+     :style="{'--sheet-height': (isMobile ? sheetHeight : 0) + 'px', '--initial-sheet-height': (isMobile ? sheetStops[1] : 0) + 'px', '--header-bottom': view.headerBottom + 'px'}">
+<aside class="desktop-sidebar" ref="desktopSidebar" v-show="!isMobile" aria-label="アーカイブのメニュー">
+  <div class="desktop-sidebar-content">
+    <h1 class="desktop-brand"><a href="./"><img src="static/img/archives-logo.png" alt="レポっと Archives" width="150" height="135"></a></h1>
     <h2>ハッシュタグ</h2>
-    <ul class="hashtags">
-      <li v-for="(h, id) in hashtag.list" @click="setHashtag(id)" :class="{active: hashtag.selected==id}" class="ic">${ h.name }</li>
-    </ul>
+    <nav aria-label="データセット">
+      <ul>
+        <li v-for="(h, id) in hashtag.list" :key="id">
+          <button type="button" class="ic" @click="setHashtag(id)" :aria-current="hashtag.selected === id ? 'true' : null">${ h.name }</button>
+        </li>
+      </ul>
+    </nav>
   </div>
   <footer>
     <ul>
-      <li @click="showLicenseDialog();">データの利用について</li>
-      <li @click="showAboutDialog();">このシステムについて</li>
+      <li><button type="button" @click="showLicenseDialog()">データの利用について</button></li>
+      <li><button type="button" @click="showAboutDialog">このシステムについて</button></li>
     </ul>
-    <p class="copyright">&copy; <a href="https://cocolab.jp/">cocolab.jp</a></p>
+    <p>&copy; <a href="https://cocolab.jp/">cocolab.jp</a></p>
   </footer>
-</div>
-<div class="main"
-     @mousemove="onDragDivider($event)"
-     @mouseup="stopDragDivider($event)">
-  <div class="summary">
+</aside>
+<div class="viewer-main">
+  <div class="desktop-summary" v-show="!isMobile">
     <div v-if="hashtag.selected != null">
-      <h2 class="ic">${ hashtag.list[hashtag.selected].name }</h2>
+      <h2 class="ic">${ selectedDatasetName }</h2>
       <ul>
-        <li class="repot-count">
-          <span class="summary-item-text">
-            <span class="summary-item-label ic">レポっと数：</span>
-            <span>${ displayCount }</span>
-          </span>
-        </li>
-        <li class="download-json">
-          <a
-             :href="'data/json/' + hashtag.selected + '.json'"
-             :download="hashtag.selected + '.json'">
-            <span class="summary-item-text">
-              <span class="summary-item-label ic">JSONを</span>
-              <span>ダウンロード</span>
-            </span>
-          </a>
-        </li>
-        <li @click="showPeriodSettingDialog" class="shown-period">
-          <span class="summary-item-text">
-            <span class="summary-item-label ic">表示期間：</span>
-            <span>${ displayFrom } 〜 ${ displayTo }</span>
-          </span>
-        </li>
+        <li><span class="material-icons-round" aria-hidden="true">photo_library</span>レポっと数：${ displayCount.toLocaleString() }</li>
+        <li><a :href="'data/json/' + hashtag.selected + '.json'" :download="hashtag.selected + '.json'"><span class="material-icons-round" aria-hidden="true">download</span>JSONをダウンロード</a></li>
+        <li><button type="button" @click="showPeriodSettingDialog"><span class="material-icons-round" aria-hidden="true">date_range</span>表示期間：${ displayFrom } 〜 ${ displayTo }</button></li>
       </ul>
     </div>
   </div>
-  <div class="view-container">
-    <div v-if="isMapMode" class="map-view"
-         :style="{width: mapWidth}">
-      <div id="map" class="map"></div>
-    </div>
-    <div v-if="isListMode" class="list-view"
-         :style="{width: listWidth}">
-      <div v-if="isBothMode" class="view-divider"
-           @mousedown="startDragDivider($event)"></div>
-      <ul id="list">
-        <li v-for="(repot, id) in archives[hashtag.selected]"
-            v-if="checkPeriod(repot.timestamp)"
-            :id="'list-' + repot.slug">
-          <img class="lazyload" src="static/img/loading-photo.png"
-               :data-src="getPhotoURL(repot)"
-               @click="showInMap(repot.slug)">
-          <time>${ getDatetimeStr(repot.timestamp) }</time>
-          <ul class="hashtags">
-            <li v-if="!validateLocation(repot)" class="missing-location ic"></li>
-            <li v-if="repot.caution_flag" class="caution">利用上の注意</li>
-            <li v-for="h in repot.hashtag_names">${ h }</li>
-          </ul>
+<div class="view-container" ref="viewContainer">
+<main id="map" class="viewer-map" :style="{width: isMobile ? '100%' : mapWidth}" aria-label="投稿写真の地図"></main>
+<header class="viewer-header" v-show="isMobile">
+  <h1 class="brand" ref="brand">
+    <a href="./" aria-label="レポっとアーカイブのトップ">
+      <img src="static/img/archives-logo.png" alt="レポっと Archives" width="150" height="135">
+    </a>
+  </h1>
+  <nav class="dataset-picker" ref="datasetPicker" :class="{'is-open': menus.datasets}" aria-label="データセット">
+    <button type="button" class="dataset-trigger" ref="datasetTrigger"
+            :aria-expanded="String(menus.datasets)" aria-controls="dataset-options"
+            @click="toggleDatasetMenu" @keydown.down.prevent="openDatasetMenu">
+      <span class="dataset-symbol" aria-hidden="true">#</span>
+      <span class="dataset-current">
+        <span class="dataset-name" :title="selectedDatasetName">${ selectedDatasetName }</span>
+      </span>
+      <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div id="dataset-options" class="dataset-options" v-show="menus.datasets">
+      <ul>
+        <li v-for="(h, id) in hashtag.list" :key="id">
+          <button type="button" @click="setHashtag(id)" :aria-current="hashtag.selected === id ? 'true' : null">
+            <span class="dataset-option-name">${ h.name }</span>
+            <svg v-if="hashtag.selected === id" viewBox="0 0 24 24" aria-label="選択中"><path d="m5 12 4 4L19 6"/></svg>
+          </button>
         </li>
-        <li class="empty" v-if="hashtag.selected == null"><p>左のメニューから、閲覧したいアーカイブのハッシュタグを選んでください</p></li>
       </ul>
     </div>
+  </nav>
+  <div class="info-menu" ref="infoMenu">
+    <button type="button" class="info-trigger" ref="infoTrigger" aria-label="ページ情報を開く"
+            :aria-expanded="String(menus.info)" aria-controls="page-information" @click="toggleInfoMenu">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v.1"/></svg>
+    </button>
+    <nav id="page-information" class="info-panel" v-show="menus.info" aria-label="ページ情報">
+      <p class="menu-heading">ページ情報</p>
+      <ul>
+        <li><button type="button" @click="showAboutDialog">このシステムについて</button></li>
+        <li><button type="button" @click="showLicenseDialog()">データの利用について</button></li>
+      </ul>
+      <p class="copyright">&copy; <a href="https://cocolab.jp/">cocolab.jp</a></p>
+    </nav>
   </div>
+</header>
+<section id="photo-sheet" class="photo-sheet" :style="{height: isMobile ? sheetHeight + 'px' : '100%', width: isMobile ? '' : listWidth}" aria-label="写真一覧">
+  <div class="view-divider" v-show="!isMobile" role="separator" tabindex="0"
+       aria-label="地図と写真一覧の幅を変更" aria-orientation="vertical" aria-controls="map list"
+       aria-valuemin="20" aria-valuemax="80" :aria-valuenow="Math.round(view.divideRatio * 100)"
+       @pointerdown="startDragDivider" @pointermove="onDragDivider" @pointerup="stopDragDivider"
+       @pointercancel="stopDragDivider" @lostpointercapture="stopDragDivider"
+       @keydown.left.prevent="resizeDivider(view.divideRatio - 0.05)"
+       @keydown.right.prevent="resizeDivider(view.divideRatio + 0.05)"
+       @keydown.home.prevent="resizeDivider(0.2)" @keydown.end.prevent="resizeDivider(0.8)"></div>
+  <button type="button" class="sheet-handle" v-show="isMobile" aria-controls="list"
+          :aria-expanded="String(sheet.level > 0)"
+          :aria-label="sheet.level === 2 ? '写真一覧を小さくする。上下にドラッグして高さを変更' : '写真一覧を広げる。上下にドラッグして高さを変更'"
+          @pointerdown="startSheetDrag" @pointermove="moveSheetDrag" @pointerup="endSheetDrag"
+          @pointercancel="cancelSheetDrag" @lostpointercapture="cancelSheetDrag"
+          @click="toggleSheet" @keydown.up.prevent="changeSheetLevel(1)"
+          @keydown.down.prevent="changeSheetLevel(-1)" @keydown.home.prevent="setSheetLevel(0)"
+          @keydown.end.prevent="setSheetLevel(2)">
+    <span class="handle-bar" aria-hidden="true"></span>
+  </button>
+  <div class="summary" v-if="hashtag.selected != null" v-show="isMobile">
+    <div class="summary-main">
+      <h2 class="photo-count"><span class="material-icons-round" aria-hidden="true">photo_library</span><strong>${ displayCount.toLocaleString() }</strong><span>枚の写真</span></h2>
+      <a class="download-json" :href="'data/json/' + hashtag.selected + '.json'" :download="hashtag.selected + '.json'">
+        <span class="material-icons-round" aria-hidden="true">download</span><span>JSON<span class="download-label">をダウンロード</span></span>
+      </a>
+    </div>
+    <button type="button" class="shown-period" @click="showPeriodSettingDialog"
+            :aria-label="'表示期間を変更：' + displayFrom + ' 〜 ' + displayTo">
+      <span class="material-icons-round" aria-hidden="true">date_range</span>
+      <span class="period-label">表示期間</span><span class="period-value">${ displayFrom } 〜 ${ displayTo }</span>
+      <span class="material-icons-round period-edit" aria-hidden="true">edit_calendar</span>
+    </button>
+  </div>
+  <ul id="list" class="photo-grid" ref="photoList">
+    <li v-for="repot in filteredArchives" :key="repot.slug" :id="'list-' + repot.slug"
+        class="photo-card" :class="{'is-selected': selectedSlug === repot.slug}">
+      <button type="button" class="photo-button" @click="showInMap(repot.slug)"
+              :aria-label="getDatetimeStr(repot.timestamp) + (validateLocation(repot) ? 'の写真を地図に表示' : 'の写真。位置情報なし')">
+        <img class="lazyload" src="static/img/loading-photo.png" :data-src="getPhotoURL(repot)"
+             :alt="selectedDatasetName + 'の投稿写真'" width="320" height="180">
+      </button>
+      <time :datetime="new Date(repot.timestamp * 1000).toISOString()">${ getDatetimeStr(repot.timestamp) }</time>
+      <ul class="hashtags" aria-label="写真のタグ">
+        <li v-if="!validateLocation(repot)" class="missing-location ic" title="位置情報なし"><span class="sr-only">位置情報なし</span></li>
+        <li v-if="repot.caution_flag" class="caution">利用上の注意</li>
+        <li v-for="h in repot.hashtag_names" :key="h">${ h }</li>
+      </ul>
+    </li>
+    <li class="empty" v-if="hashtag.selected == null">
+      <span class="material-icons-round" aria-hidden="true">photo_library</span>
+      <p v-if="isMobile">地図と写真で、まちの記録を見てみよう</p>
+      <p v-else>左のメニューから、閲覧したいアーカイブのハッシュタグを選んでください</p>
+      <button type="button" v-if="isMobile" @click="openDatasetMenu">データセットを選ぶ</button>
+    </li>
+    <li class="empty" v-else-if="displayCount === 0">
+      <p>この期間の写真はありません</p>
+      <button type="button" @click="showPeriodSettingDialog">表示期間を変更する</button>
+    </li>
+  </ul>
+</section>
 </div>
-<dialog id="period-setting">
+</div>
+<dialog id="period-setting" aria-labelledby="period-title" @click.self="dismissPeriodSettingDialog">
   <article>
     <header>
-      <h1>表示期間の変更</h1>
-      <span @click.stop="dismissPeriodSettingDialog();" class="ic">閉じる</span>
+      <h1 id="period-title">表示期間の変更</h1>
+      <button type="button" @click="dismissPeriodSettingDialog" class="dialog-close ic">閉じる</button>
     </header>
-    <div class="period-form">
+    <form class="period-form" @submit.prevent="setPeriod">
       <h2>表示期間を直接入力する</h2>
-      <input type="date" name="form-period-from" id="form-period-from">
-      〜
-      <input type="date" name="form-period-to" id="form-period-to">
-      <span class="form-set-period" @click.stop="setPeriod();">決定</span>
-    </div>
+      <div class="period-inputs">
+        <label>開始日<input type="date" name="form-period-from" id="form-period-from" required></label>
+        <span aria-hidden="true">〜</span>
+        <label>終了日<input type="date" name="form-period-to" id="form-period-to" required></label>
+      </div>
+      <p v-if="periodError" class="period-error" role="alert">${ periodError }</p>
+      <button type="submit" class="form-set-period">決定</button>
+    </form>
     <div class="period-years" v-if="periodYears.length">
       <h2>表示する年を選択する</h2>
       <ul>
-        <li @click.stop="setPeriodAll()">全期間</li>
-        <li v-for="year in periodYears" :key="year" @click.stop="setPeriodYear(year)">${ year }年</li>
+        <li><button type="button" @click="setPeriodAll">全期間</button></li>
+        <li v-for="year in periodYears" :key="year"><button type="button" @click="setPeriodYear(year)">${ year }年</button></li>
       </ul>
     </div>
   </article>
 </dialog>
-<dialog id="license" @click.stop="dismissLicenseDialog();">
+<dialog id="license" aria-labelledby="license-title" @click.stop="dismissLicenseDialog();">
   <article @click.stop="">
     <header>
-      <h1>データの利用について</h1>
+      <h1 id="license-title">データの利用について</h1>
       <p class="updated-at">更新日：2026年8月4日</p>
-      <span @click.stop="dismissLicenseDialog();" class="ic">閉じる</span>
+      <button type="button" @click="dismissLicenseDialog" class="dialog-close ic">閉じる</button>
     </header>
     <div>
       <h2>データの収集方法</h2>
@@ -233,11 +300,11 @@
     </footer>
   </article>
 </dialog>
-<dialog id="about" @click.stop="dismissAboutDialog();">
+<dialog id="about" aria-labelledby="about-title" @click.stop="dismissAboutDialog();">
   <article @click.stop="">
     <header>
-      <h1>レポっとアーカイブについて</h1>
-      <span @click.stop="dismissAboutDialog();" class="ic">閉じる</span>
+      <h1 id="about-title">レポっとアーカイブについて</h1>
+      <button type="button" @click="dismissAboutDialog" class="dialog-close ic">閉じる</button>
     </header>
     <div>
       <h2>本システムについて</h2>
@@ -254,8 +321,7 @@
   </article>
 </dialog>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
-<script type="module" src="data/archives.js?v=3.0" type="text/javascript" charset="UTF-8"></script>
-<script type="module" src="static/js/main.js?v=3.0" type="text/javascript" charset="UTF-8"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.min.js"></script>
+<script type="module" src="static/js/main.js?v=5.0" charset="UTF-8"></script>
 </body>
 </html>
