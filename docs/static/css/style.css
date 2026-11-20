@@ -2,11 +2,20 @@
   --accent: #0099cc;
   --text: #263441;
   --muted: #687681;
+  --viewport-height: 100vh;
+  --viewport-width: 100vw;
+  --viewport-top: 0px;
+  --viewport-left: 0px;
+  --viewport-bottom-gap: 0px;
+  --viewport-right-gap: 0px;
+  --header-bottom: 96px;
   --sheet-height: 44vh;
 }
+@supports (height: 100dvh) { :root { --viewport-height: 100dvh; } }
 * { box-sizing: border-box; }
-html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+html, body { width: 100%; height: 100%; min-height: 0; margin: 0; overflow: hidden; }
 body {
+  position: fixed; inset: 0;
   color: var(--text);
   font: 400 14px/1.6 'Noto Sans JP', Helvetica, Arial, sans-serif;
   overscroll-behavior: none;
@@ -29,7 +38,15 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
-#app { position: relative; width: 100%; height: 100vh; height: 100dvh; overflow: hidden; }
+#app {
+  /* visualViewportですでに除外した領域を、安全余白として二重に確保しない。 */
+  --safe-top: max(0px, calc(env(safe-area-inset-top, 0px) - var(--viewport-top)));
+  --safe-right: max(0px, calc(env(safe-area-inset-right, 0px) - var(--viewport-right-gap)));
+  --safe-bottom: max(0px, calc(env(safe-area-inset-bottom, 0px) - var(--viewport-bottom-gap)));
+  --safe-left: max(0px, calc(env(safe-area-inset-left, 0px) - var(--viewport-left)));
+  position: fixed; top: var(--viewport-top); left: var(--viewport-left);
+  width: var(--viewport-width); height: var(--viewport-height); overflow: hidden;
+}
 .viewer-map { position: absolute; inset: 0; z-index: 0; background: #e8eeeb; }
 .viewer-main { position: absolute; inset: 0; display: flex; flex-direction: column; }
 .view-container { position: relative; flex: 1 1 0; width: 100%; min-height: 0; }
@@ -40,7 +57,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   position: absolute; z-index: 30; top: 0; left: 0; width: 100%;
   display: grid; grid-template-columns: var(--header-control-height) minmax(0, 1fr) var(--header-control-height);
   align-items: start; gap: 10px;
-  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
+  padding: max(12px, var(--safe-top)) max(12px, var(--safe-right)) 0 max(12px, var(--safe-left));
   pointer-events: none;
 }
 .viewer-header > * { pointer-events: auto; }
@@ -63,7 +80,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .dataset-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; }
 .chevron { width: 18px; transition: transform 180ms ease; }
 .is-open .chevron { transform: rotate(180deg); }
-.dataset-options { max-height: min(60vh, 480px); max-height: min(60dvh, 480px); overflow-y: auto; overscroll-behavior: contain; border-top: 1px solid #edf0f2; }
+.dataset-options { max-height: min(480px, max(0px, calc(var(--viewport-height) - var(--header-bottom) - var(--safe-bottom) - 12px))); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; border-top: 1px solid #edf0f2; }
 .menu-heading { margin: 0; padding: 12px 14px 6px; color: var(--muted); font-size: 11px; font-weight: 600; }
 .dataset-options ul, .info-panel ul { margin: 0; padding: 4px 6px 8px; list-style: none; }
 .dataset-options li button {
@@ -82,8 +99,9 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .info-trigger svg { width: 25px; height: 25px; }
 .info-trigger:hover, .info-trigger[aria-expanded="true"] { color: #007aa3; background: #eaf7fc; }
 .info-panel {
-  position: absolute; top: calc(100% + 10px); right: 0; width: 250px; max-width: calc(100vw - 24px);
-  max-height: calc(100vh - 100px); max-height: calc(100dvh - 100px); overscroll-behavior: contain;
+  position: absolute; top: calc(100% + 10px); right: 0; width: 250px;
+  max-width: calc(var(--viewport-width) - max(12px, var(--safe-left)) - max(12px, var(--safe-right)));
+  max-height: max(0px, calc(var(--viewport-height) - var(--header-bottom) - var(--safe-bottom) - 12px)); overscroll-behavior: contain;
   overflow: auto; background: white; border: 1px solid #e4e9ed; border-radius: 14px; box-shadow: 0 6px 28px #23334026;
 }
 .info-panel li button { width: 100%; min-height: 46px; padding: 10px; text-align: left; border-radius: 8px; background: white; font-size: 13px; }
@@ -93,12 +111,14 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .photo-sheet {
   position: absolute; z-index: 20; bottom: 0; left: 50%; transform: translateX(-50%);
   display: flex; flex-direction: column; width: min(100%, 1080px); min-height: 0;
-  padding-bottom: env(safe-area-inset-bottom); overflow: hidden; background: white;
+  overflow: hidden; background: white;
   border-radius: 22px 22px 0 0; box-shadow: 0 -4px 28px #23334028;
   transition: height 240ms cubic-bezier(.2, .7, .3, 1);
 }
 .sheet-handle {
-  display: grid; place-items: center; flex: 0 0 30px; width: 100%; padding: 0;
+  display: flex; align-items: center; justify-content: center; flex: 0 0 44px;
+  width: 100%; height: 44px; min-height: 44px; margin: 0; padding: 12px 0;
+  appearance: none; -webkit-appearance: none;
   background: white; touch-action: none; cursor: grab; user-select: none;
 }
 .sheet-handle:focus-visible { outline-offset: -4px; border-radius: 22px 22px 0 0; }
@@ -126,7 +146,8 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .period-edit { margin-left: auto; }
 .photo-grid {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 10px;
-  flex: 1 1 auto; min-height: 0; margin: 0; padding: 8px 20px 20px; overflow-y: auto;
+  flex: 1 1 0; min-height: 0; margin: 0;
+  padding: 8px max(20px, var(--safe-right)) calc(20px + var(--safe-bottom)) max(20px, var(--safe-left)); overflow-y: auto;
   list-style: none; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; scroll-padding-block: 8px;
 }
 .photo-card { position: relative; min-width: 0; aspect-ratio: 16/9; border-radius: 10px; background: #e9eff2; }
@@ -148,12 +169,11 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .empty button { min-height: 44px; padding: 8px 18px; border-radius: 10px; color: white; background: var(--accent); font-weight: 600; }
 
 .leaflet-control-zoom { display: none; }
-.leaflet-bottom.leaflet-left { left: env(safe-area-inset-left); }
+.leaflet-bottom.leaflet-left { left: var(--safe-left); }
 .leaflet-bottom { top: calc((100% - var(--initial-sheet-height) + var(--header-bottom)) / 2); bottom: auto; }
 .leaflet-control-attribution {
   position: absolute; left: 0; top: 0; float: none; margin: 0 !important;
-  width: max-content; max-width: max(72px, calc(100vh - var(--initial-sheet-height) - var(--header-bottom) - 20px));
-  max-width: max(72px, calc(100dvh - var(--initial-sheet-height) - var(--header-bottom) - 20px));
+  width: max-content; max-width: max(72px, calc(var(--viewport-height) - var(--initial-sheet-height) - var(--header-bottom) - 20px));
   transform: rotate(90deg) translate(-50%, -100%); transform-origin: top left;
   font-size: 9px; line-height: 1.4; overflow-wrap: anywhere;
 }
@@ -166,8 +186,13 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .leaflet-popup-content ul li { display: inline-block; margin: 3px 3px 0 0; padding: 2px 5px; background: #f0f3f5; border-radius: 3px; font-size: 10px; }
 
 dialog {
-  width: min(600px, calc(100% - 24px)); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px);
-  margin: auto; padding: 0; overflow-x: hidden; overflow-y: auto; border: 0; border-radius: 14px;
+  position: fixed; inset: auto;
+  top: calc(var(--viewport-top) + (var(--viewport-height) + var(--safe-top) - var(--safe-bottom)) / 2);
+  left: calc(var(--viewport-left) + (var(--viewport-width) + var(--safe-left) - var(--safe-right)) / 2);
+  transform: translate(-50%, -50%);
+  width: min(600px, calc(var(--viewport-width) - var(--safe-left) - var(--safe-right) - 24px));
+  max-height: max(0px, calc(var(--viewport-height) - var(--safe-top) - var(--safe-bottom) - 24px));
+  margin: 0; padding: 0; overflow-x: hidden; overflow-y: auto; border: 0; border-radius: 14px;
   background: white; color: var(--text); overscroll-behavior: contain;
 }
 dialog::backdrop { background: #12222e88; backdrop-filter: blur(3px); }
@@ -194,7 +219,7 @@ dialog article pre.bibtex code { margin: 0; padding: 0; background: transparent;
 .period-inputs { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: 8px; }
 .period-inputs label { display: flex; flex-direction: column; gap: 6px; min-width: 0; color: var(--muted); font-size: 12px; }
 .period-inputs > span { align-self: center; padding-top: 20px; }
-.period-inputs input { display: block; width: 100%; min-width: 0; min-height: 44px; padding: 8px; border: 1px solid #dde5eb; border-radius: 8px; background: #f4f6f8; color: var(--text); font-size: 14px; }
+.period-inputs input { display: block; width: 100%; min-width: 0; min-height: 44px; padding: 8px; border: 1px solid #dde5eb; border-radius: 8px; background: #f4f6f8; color: var(--text); font-size: 16px; }
 .form-set-period { display: block; width: 100%; min-height: 44px; margin-top: 16px; padding: 8px 16px; border-radius: 9px; background: var(--accent); color: white; font-weight: 600; }
 .period-error { margin: 12px 0 0; font-size: 12px; color: #bd3030; }
 dialog div.period-years { padding: 0 20px 24px; }
@@ -203,13 +228,13 @@ dialog div.period-years { padding: 0 20px 24px; }
 .period-years li button:hover { background: var(--accent); color: white; }
 
 @media (min-width: 600px) {
-  .viewer-header { --header-control-height: 64px; gap: 16px; padding-top: max(16px, env(safe-area-inset-top)); padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+  .viewer-header { --header-control-height: 64px; gap: 16px; padding-top: max(16px, var(--safe-top)); padding-left: max(16px, var(--safe-left)); padding-right: max(16px, var(--safe-right)); }
   .brand a { padding: 6px; }
   .dataset-trigger { padding: 10px 16px; }
   .dataset-name { font-size: 16px; }
   .download-label { display: inline; }
   .summary { padding-left: 20px; padding-right: 20px; }
-  .photo-grid { padding-left: 24px; padding-right: 24px; gap: 12px; }
+  .photo-grid { padding-left: max(24px, var(--safe-left)); padding-right: max(24px, var(--safe-right)); gap: 12px; }
   .photo-card > time { font-size: 12px; }
 }
 @media (min-width: 700px) { .photo-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
@@ -219,12 +244,11 @@ dialog div.period-years { padding: 0 20px 24px; }
   .dataset-name { font-size: 12px; }
   .dataset-symbol { font-size: 22px; }
   .summary { padding-left: 12px; padding-right: 12px; }
-  .photo-grid { padding-left: 16px; padding-right: 16px; gap: 8px; }
+  .photo-grid { padding-left: max(16px, var(--safe-left)); padding-right: max(16px, var(--safe-right)); gap: 8px; }
   .period-label { display: none; }
 }
 @media (max-height: 480px) {
   .viewer-header { --header-control-height: 48px; }
-  .dataset-options { max-height: calc(100dvh - 110px); }
 }
 @media (min-width: 1200px) {
   .viewer-main { left: 180px; }

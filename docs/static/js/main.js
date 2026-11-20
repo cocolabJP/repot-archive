@@ -19,6 +19,11 @@ var app = new Vue({
     view: {
       wh: 0,
       ww: 0,
+      viewportWidth: 0,
+      top: 0,
+      left: 0,
+      bottomGap: 0,
+      rightGap: 0,
       headerBottom: 96,
       divideRatio: 0.5,
       isDragging: false,
@@ -43,27 +48,37 @@ var app = new Vue({
   },
   created: function() {
     this._openPopup = null;
+    this._viewportFrame = null;
   },
   mounted: function() {
     this.updateScreenSize();
     this.loadPage();
   },
   destroyed: function () {
-    window.removeEventListener('resize', this.updateScreenSize, false);
+    window.removeEventListener('resize', this.queueScreenUpdate);
+    window.removeEventListener('pageshow', this.queueScreenUpdate);
     window.removeEventListener('hashchange', this.checkHash, false);
     window.removeEventListener('keydown', this.onKeydown);
     document.removeEventListener('pointerdown', this.onOutsidePointer);
-    if (window.visualViewport) window.visualViewport.removeEventListener('resize', this.updateScreenSize);
+    if (window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', this.queueScreenUpdate);
+      window.visualViewport.removeEventListener('scroll', this.queueScreenUpdate);
+    }
+    if (this._viewportFrame !== null) window.cancelAnimationFrame(this._viewportFrame);
     if (this.map) this.map.remove();
   },
   methods: {
     loadPage() {
-      // 画面の向き変更イベントを登録
-      window.addEventListener('resize', this.updateScreenSize);
+      // SafariのURLバー・キーボード・画面回転・履歴からの復帰に追従する。
+      window.addEventListener('resize', this.queueScreenUpdate);
+      window.addEventListener('pageshow', this.queueScreenUpdate);
       window.addEventListener('hashchange', this.checkHash);
       window.addEventListener('keydown', this.onKeydown);
       document.addEventListener('pointerdown', this.onOutsidePointer);
-      if (window.visualViewport) window.visualViewport.addEventListener('resize', this.updateScreenSize);
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', this.queueScreenUpdate);
+        window.visualViewport.addEventListener('scroll', this.queueScreenUpdate);
+      }
       this.showMap();
       this.checkQueryStrings();
       this.checkHash();
@@ -90,18 +105,44 @@ var app = new Vue({
     replaceHash(hash) {
       window.history.replaceState(null, '', `#${encodeURIComponent(hash)}`);
     },
+    queueScreenUpdate() {
+      if (this._viewportFrame !== null) return;
+      this._viewportFrame = window.requestAnimationFrame(() => {
+        this._viewportFrame = null;
+        this.updateScreenSize();
+      });
+    },
     updateScreenSize() {
-      this.cancelSheetDrag();
-      this.view.isDragging = false;
-      this.view.dividerPointerId = null;
-      this.view.wh = window.innerHeight;
+      const viewport = window.visualViewport;
+      // ページ自体のピンチズームではレイアウトを組み直さない。
+      if (viewport && Math.abs((viewport.scale || 1) - 1) > 0.01 && this.view.wh) return;
+      const hasViewport = viewport && viewport.height > 0 && viewport.width > 0;
+      const height = hasViewport ? viewport.height : window.innerHeight;
+      const width = hasViewport ? viewport.width : window.innerWidth;
+      const top = hasViewport ? Math.max(0, viewport.offsetTop || 0) : 0;
+      const left = hasViewport ? Math.max(0, viewport.offsetLeft || 0) : 0;
+      const root = document.documentElement;
+      const layoutHeight = (root && root.clientHeight) || window.innerHeight;
+      const layoutWidth = (root && root.clientWidth) || window.innerWidth;
+      if (height !== this.view.wh || width !== this.view.viewportWidth || window.innerWidth !== this.view.ww) {
+        this.cancelSheetDrag();
+        this.view.isDragging = false;
+        this.view.dividerPointerId = null;
+      }
+      this.view.wh = height;
       this.view.ww = window.innerWidth;
+      this.view.viewportWidth = width;
+      this.view.top = top;
+      this.view.left = left;
+      this.view.bottomGap = Math.max(0, layoutHeight - top - height);
+      this.view.rightGap = Math.max(0, layoutWidth - left - width);
       if (!this.isMobile) this.closeMenus();
       this.$nextTick(() => {
         this.view.headerBottom = this.isMobile ? Math.ceil(Math.max(
           this.$refs.brand.getBoundingClientRect().bottom,
           this.$refs.datasetTrigger.getBoundingClientRect().bottom,
-        )) + 12 : 0;
+          this.$refs.infoTrigger.getBoundingClientRect().bottom,
+        ) - this.$refs.viewContainer.getBoundingClientRect().top) + 12 : 0;
         if (this.map) {
           this.map.invalidateSize();
           if (this.map.attributionControl) this.map.attributionControl.setPosition(this.isMobile ? 'bottomleft' : 'bottomright');
@@ -446,6 +487,20 @@ var app = new Vue({
     },
   },
   computed: {
+    viewerStyle: function() {
+      const style = {
+        '--sheet-height': (this.isMobile ? this.sheetHeight : 0) + 'px',
+        '--initial-sheet-height': (this.isMobile ? this.sheetStops[1] : 0) + 'px',
+        '--header-bottom': this.view.headerBottom + 'px',
+        '--viewport-top': this.view.top + 'px',
+        '--viewport-left': this.view.left + 'px',
+        '--viewport-bottom-gap': this.view.bottomGap + 'px',
+        '--viewport-right-gap': this.view.rightGap + 'px',
+      };
+      if (this.view.wh) style['--viewport-height'] = this.view.wh + 'px';
+      if (this.view.viewportWidth) style['--viewport-width'] = this.view.viewportWidth + 'px';
+      return style;
+    },
     isMobile: function() { return this.view.ww < DESKTOP_MIN_WIDTH; },
     mapWidth: function() { return (this.view.divideRatio * 100) + '%'; },
     listWidth: function() { return ((1 - this.view.divideRatio) * 100) + '%'; },
@@ -454,7 +509,7 @@ var app = new Vue({
     },
     sheetStops: function() {
       const height = this.view.wh || window.innerHeight;
-      const maximum = Math.max(80, height - this.view.headerBottom);
+      const maximum = Math.max(0, height - this.view.headerBottom);
       const minimum = Math.min(176, maximum);
       const middle = Math.min(maximum, Math.max(minimum + 24, Math.round(height * 0.44)));
       return [minimum, middle, maximum];

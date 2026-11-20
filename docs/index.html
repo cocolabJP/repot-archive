@@ -22,11 +22,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-<link rel="stylesheet" href="static/css/style.css?v=5.0">
+<link rel="stylesheet" href="static/css/style.css?v=5.1">
 </head>
 <body>
 <div id="app" v-cloak :class="{'sheet-dragging': sheet.dragging, 'divider-dragging': view.isDragging}"
-     :style="{'--sheet-height': (isMobile ? sheetHeight : 0) + 'px', '--initial-sheet-height': (isMobile ? sheetStops[1] : 0) + 'px', '--header-bottom': view.headerBottom + 'px'}">
+     :style="viewerStyle">
 <aside class="desktop-sidebar" ref="desktopSidebar" v-show="!isMobile" aria-label="アーカイブのメニュー">
   <div class="desktop-sidebar-content">
     <h1 class="desktop-brand"><a href="./"><img src="static/img/archives-logo.png" alt="レポっと Archives" width="150" height="135"></a></h1>
@@ -322,6 +322,6 @@
 </dialog>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.min.js"></script>
-<script type="module" src="static/js/main.js?v=5.0" charset="UTF-8"></script>
+<script type="module" src="static/js/main.js?v=5.1" charset="UTF-8"></script>
 </body>
 </html>
