@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { loadConfig, sendPayload, run } = require('../upload_to_odcs');
+const { loadConfig, mapRecord, buildUploadPlans, sendPayload, run } = require('../upload_to_odcs');
 const { buildImagePlan, imageReviewPlan } = require('../lib/odcs_images');
 
 const config = { ...loadConfig({}), apiKey: 'test-only-key' };
@@ -13,10 +13,12 @@ const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR
 
 function fixture() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'odcs-images-'));
-  const records = ['one.png', 'two.png'].map((filename, index) => ({
-    id: 1000000001 + index, slug: `post-${index}`, filename, source: 'repot', image_url: 'https://example.org/old.png',
-  }));
-  for (const record of records) fs.writeFileSync(path.join(dir, record.filename), png);
+  const filenames = ['one.png', 'two.png'];
+  const records = filenames.map((filename, index) => mapRecord({
+    slug: `post-${index}`, filename, timestamp: 1745721236 + index,
+    location_lat: 34, location_lng: 134, caption: '',
+  }, 'komaruKurage', config));
+  for (const filename of filenames) fs.writeFileSync(path.join(dir, filename), png);
   const payload = { resource_id: config.resourceId, method: 'upsert', records };
   return { dir, payload, images: buildImagePlan(payload, dir), close: () => fs.rmSync(dir, { recursive: true, force: true }) };
 }
@@ -36,7 +38,10 @@ function mockServer(payload) {
         id, type: 'text', schema: { uniquekey: id === 'id' && !state.badSchema },
       })) };
     } else if (action === 'datastore_search') {
-      result = { records: [], total: 0 };
+      const filters = JSON.parse(url.searchParams.get('filters'));
+      const [key] = Object.keys(filters);
+      const records = (state.rows.at(-1)?.records || []).filter((row) => filters[key].includes(row[key]));
+      result = { records, total: records.length };
     } else if (action === 'resource_show') {
       assert.equal(url.searchParams.get('id'), table.id);
       result = table;
@@ -80,46 +85,32 @@ function mockServer(payload) {
 test('ローカル画像を重複なく検証し、URL 未確定の確認用計画を生成する', () => {
   const f = fixture();
   try {
-    const duplicated = { ...f.payload, records: [...f.payload.records, { ...f.payload.records[0], id: 3, slug: 'another-post' }] };
+    const duplicated = { ...f.payload, records: [...f.payload.records, { ...f.payload.records[0], id: 3 }] };
     assert.equal(buildImagePlan(duplicated, f.dir).length, 2);
     assert.match(f.images[0].sha256, /^[0-9a-f]{64}$/);
     assert.equal(f.images[0].size, png.length);
     const review = imageReviewPlan(f.payload, f.images);
     assert.equal(review.type, 'repot-odcs-image-upload-plan-v1');
     assert.ok(review.payload.records.every((record) => record.image_url === null));
-    assert.equal(f.payload.records[0].image_url, 'https://example.org/old.png');
+    assert.equal(f.payload.records[0].image_url, 'https://data.cocolab.jp/repot/one.png');
     fs.writeFileSync(path.join(f.dir, 'one.png'), '画像ではないデータ');
     assert.throws(() => buildImagePlan(f.payload, f.dir), /画像の形式/);
   } finally { f.close(); }
 });
 
-test('実画像の dry-run は外部通信せず、件数と確認用計画を出力する', async () => {
-  let output = '';
-  let logs = '';
-  await run(['--upload-images', '--dry-run'], {
-    env: { CKAN_API_KEY: 'test-only-key' },
-    fetchImpl: async () => assert.fail('外部通信禁止'),
-    stdout: { write: (value) => { output += value; } },
-    stderr: { write: (value) => { logs += value; } },
-  });
-  const plan = JSON.parse(output);
-  assert.equal(plan.datasets.length, 2);
-  for (const dataset of plan.datasets) {
-    assert.ok(dataset.images.length > 0);
-    assert.equal(dataset.images.length, new Set(dataset.payload.records.map((record) => record.filename)).size);
-    assert.ok(dataset.payload.records.every((record) => record.image_url === null));
-  }
-  assert.match(logs, /画像: .* 枚/);
+test('移行用の既存画像計画はローカル検証だけで生成できる', () => {
+  const plans = buildUploadPlans(['komaruKurage', 'chushikokuSakana'], config, { uploadImages: true });
+  assert.ok(plans.every((plan) => plan.images.length === plan.payload.records.length));
 });
 
-test('画像が不足する場合は --send でも API 呼び出しより前に止まる', async () => {
+test('旧画像送信オプションはAPI呼び出しより前に止まる', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'odcs-missing-images-'));
   try {
     await assert.rejects(run(['--upload-images', '--send'], {
       env: { CKAN_API_KEY: 'test-only-key', ODCS_IMAGE_DIR: dir },
       fetchImpl: async () => assert.fail('外部通信禁止'),
       stdout: { write() {} }, stderr: { write() {} },
-    }), /ENOENT/);
+    }), /CSVのみ/);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -135,7 +126,8 @@ test('模擬 API で画像を先に保存し、返された URL を表へ登録�
     assert.ok(actions.lastIndexOf('resource_create') < actions.lastIndexOf('datastore_info'));
     assert.equal(actions.at(-1), 'datastore_upsert');
     assert.ok(server.rows[0].records.every((record) => record.image_url.startsWith('https://data.bodik.jp/dataset/')));
-    assert.equal(f.payload.records[0].image_url, 'https://example.org/old.png');
+    assert.ok(server.rows[0].records.every((record) => Object.keys(record).length === 9 && !('filename' in record) && !('_id' in record)));
+    assert.equal(f.payload.records[0].image_url, 'https://data.cocolab.jp/repot/one.png');
     await sendPayload(f.payload, config, server.fetchImpl, { images: f.images });
     assert.equal(server.resources.length, 3);
     assert.equal(server.createAttempts, 2);

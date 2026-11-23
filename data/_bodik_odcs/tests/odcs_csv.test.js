@@ -23,6 +23,7 @@ function fixture() {
     if (action === 'package_show') return { id: plan.dataset_id, notes: datasetMarker(plan.target), resources: state.resources };
     if (action === 'datastore_search') {
       assert.equal(params.fields, CSV_FIELDS.join(','));
+      assert.equal(params.sort, 'id asc');
       return { records: state.records.slice(Number(params.offset), Number(params.offset) + 1), total: state.records.length };
     }
     assert.ok(['resource_create', 'resource_patch'].includes(action));
@@ -54,29 +55,44 @@ function fixture() {
   return { directory, plan, state, close: () => fs.rmSync(directory, { recursive: true, force: true }) };
 }
 
-test('CSVは17列を同じ順序で保持し、BOM・CRLF・引用符・カンマ・改行・nullを扱う', () => {
+test('CSVは登録用9列を同じ順序で保持し、BOM・CRLF・引用符・カンマ・改行・nullを扱う', () => {
+  assert.deepEqual(CSV_FIELDS, ['id', 'timestamp', 'lat', 'lon', 'caption', 'image_url', 'created_at', 'updated_at', 'deleted_at']);
   assert.deepEqual(CSV_FIELDS, Object.keys(record));
   const bytes = serializeCsv([record]);
   assert.deepEqual([...bytes.subarray(0, 3)], [0xef, 0xbb, 0xbf]);
   const text = bytes.toString('utf8');
   assert.ok(text.startsWith('\uFEFF' + CSV_FIELDS.join(',') + '\r\n'));
   assert.ok(text.includes('"日本語, ""引用""\n次の行"'));
-  assert.ok(text.includes(',0,0,0,confirmed,'));
+  assert.ok(text.includes(',0,0,'));
   assert.ok(text.endsWith(',\r\n'));
   assert.ok(!text.includes('null'));
   assert.throws(() => serializeCsv([{ ...record, lat: NaN }]), /出力できない/);
-  const missing = { ...record }; delete missing.slug;
-  assert.throws(() => serializeCsv([missing]), /必要な項目/);
+  const missing = { ...record }; delete missing.caption;
+  assert.throws(() => serializeCsv([missing]), /9項目/);
+  for (const field of ['_id', 'user_id', 'slug', 'location_alt', 'status', 'tags', 'species', 'filename', 'source']) {
+    assert.throws(() => serializeCsv([{ ...record, [field]: 'old-value' }]), /9項目/);
+  }
 });
 
 test('CSVはJSON投稿表の全件をページ取得し、今回送信した分以外の既存投稿も含める', async () => {
   const f = fixture();
-  f.state.records.push({ ...record, id: record.id + 1, slug: 'older-post', filename: 'older.png' });
+  f.state.records.push({ ...record, id: record.id + 1, _id: 2, image_url: 'https://data.cocolab.jp/repot/older.png' });
   try {
     const rows = await readCsvRecords(f.plan.payload.resource_id, f.state.request);
     assert.equal(rows.length, 2);
     assert.equal(f.state.calls.filter((call) => call.action === 'datastore_search').length, 2);
     assert.ok(rows.every((row) => !Object.hasOwn(row, '_id')));
+    assert.ok(rows.every((row) => Object.keys(row).length === 9));
+  } finally { f.close(); }
+});
+
+test('CSV生成前に、登録したIDだけでなく日時・画像も一致することを確認する', async () => {
+  const f = fixture();
+  f.state.records[0].timestamp += 1;
+  try {
+    await assert.rejects(uploadCsv(await prepareCsvUpload(f.plan, config, f.state.request),
+      config, f.state.request, f.state.fetchImpl, f.directory), /送信した投稿/);
+    assert.ok(f.state.calls.every((call) => call.method === 'GET'));
   } finally { f.close(); }
 });
 
@@ -129,17 +145,17 @@ test('CSVのdry-runは実サーバーに接続せず、分類ごとのプレビ�
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'odcs-csv-preview-'));
   try {
     let output = '';
-    await run(['--upload-csv', '--upload-images', '--dry-run', '--csv-dir', directory], {
+    await run(['--upload-csv', '--dry-run', '--csv-dir', directory], {
       env: {}, stdout: { write: (value) => { output += value; } }, stderr: { write() {} },
       fetchImpl: async () => assert.fail('通信禁止'),
     });
     const plan = JSON.parse(output);
     assert.equal(plan.datasets.length, 2);
     for (const dataset of plan.datasets) {
-      assert.ok(fs.existsSync(dataset.csv.preview_path));
-      assert.ok(fs.readFileSync(dataset.csv.preview_path, 'utf8').includes('image_url'));
-      assert.ok(!fs.readFileSync(dataset.csv.preview_path, 'utf8').includes('https://data.cocolab.jp/repot/'));
+      assert.ok(fs.existsSync(dataset.csv_path));
+      assert.ok(fs.readFileSync(dataset.csv_path, 'utf8').includes('image_url'));
+      assert.ok(fs.readFileSync(dataset.csv_path, 'utf8').includes('https://data.cocolab.jp/repot/'));
     }
-    assert.throws(() => parseArgs(['--csv-dir', directory]), /一緒に/);
+    assert.equal(parseArgs(['--csv-dir', directory]).csvDir, directory);
   } finally { fs.rmSync(directory, { recursive: true, force: true }); }
 });

@@ -4,8 +4,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { createHash } = require('node:crypto');
-const { buildImagePlan, prepareImageUploads, uploadImages, attachImageUrls, imageReviewPlan } = require('./lib/odcs_images');
-const { writeCsvPreview, prepareCsvUpload, uploadCsv, writeCsvFile } = require('./lib/odcs_csv');
+const { buildImagePlan, prepareImageUploads, uploadImages, attachImageUrls } = require('./lib/odcs_images');
+const { writeCsvFile } = require('./lib/odcs_csv');
+const { assertRecordFields, assertTableFields, imageFilename } = require('./lib/odcs_schema');
 
 const ARCHIVE_DIR = path.resolve(__dirname, '../../docs/data/archives');
 const DEFAULT_RESOURCE_ID = '8732b437-2134-445d-9a6b-461f02743c83';
@@ -16,29 +17,26 @@ const TARGETS = {
 const TARGET_ENV_SUFFIXES = { komaruKurage: 'KOMARU_KURAGE', chushikokuSakana: 'CHUSHIKOKU_SAKANA' };
 
 function parseArgs(argv) {
-  const args = { targets: [], send: false, dryRun: false, uploadImages: false, uploadCsv: false, csvDir: '', insertOnly: false, force: false, output: '', help: false };
+  const args = { targets: [], send: false, dryRun: false, csvDir: '', output: '', help: false, replaceLegacy: false };
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
     if (token === '--send') args.send = true;
     else if (token === '--dry-run') args.dryRun = true;
-    else if (token === '--upload-images') args.uploadImages = true;
-    else if (token === '--upload-csv') args.uploadCsv = true;
-    else if (token === '--insert-only') args.insertOnly = true;
-    else if (token === '--force') args.force = true;
+    else if (token === '--upload-csv') { /* 旧コマンドとの互換用。現在は常にCSVのみ。 */ }
+    else if (token === '--replace-legacy') args.replaceLegacy = true;
     else if (token === '--help' || token === '-h') args.help = true;
-    else if (token === '--target' || token === '--output' || token === '--csv-dir') {
+    else if (['--upload-images', '--insert-only', '--force'].includes(token)) {
+      throw new Error(`${token} は対応終了しました。画像・JSONは送信せず、CSVのみを扱います。`);
+    } else if (['--target', '--output', '--csv-dir'].includes(token)) {
       const value = argv[++i];
       if (!value || value.startsWith('-')) throw new Error(`${token} の値が必要です。`);
       if (token === '--output') args.output = value;
       else if (token === '--csv-dir') args.csvDir = value;
       else if (Object.hasOwn(TARGETS, value)) args.targets.push(value);
       else throw new Error(`対象外です: ${value}（${Object.keys(TARGETS).join(', ')}）`);
-    } else {
-      throw new Error(`不明な引数です: ${token}`);
-    }
+    } else throw new Error(`不明な引数です: ${token}`);
   }
   if (args.send && args.dryRun) throw new Error('--send と --dry-run は同時に指定できません。');
-  if (args.csvDir && !args.uploadCsv) throw new Error('--csv-dir は --upload-csv と一緒に指定してください。');
   args.targets = [...new Set(args.targets.length ? args.targets : Object.keys(TARGETS))];
   return args;
 }
@@ -57,9 +55,12 @@ function loadConfig(env) {
     baseUrl: baseUrl.href.replace(/\/+$/, ''),
     apiKey: env.CKAN_API_KEY || '',
     resourceId: env.CKAN_RESOURCE_ID || DEFAULT_RESOURCE_ID,
-    definitions: registry.targets,
+    definitions: Object.fromEntries(Object.entries(registry.targets).map(([target, definition]) => [target, {
+      ...definition, csv_resource_id: env[`CKAN_CSV_RESOURCE_ID_${TARGET_ENV_SUFFIXES[target]}`] || definition.csv_resource_id || '',
+    }])),
+    ownerOrg: registry.owner_org,
     resourceIds: Object.fromEntries(Object.entries(TARGET_ENV_SUFFIXES).map(([target, suffix]) => [
-      target, env[`CKAN_RESOURCE_ID_${suffix}`] || registry.targets[target].resource_id || '',
+      target, env[`CKAN_RESOURCE_ID_${suffix}`] || registry.targets[target].legacy_table_resource_id || registry.targets[target].resource_id || '',
     ])),
     datasetIds: Object.fromEntries(Object.entries(TARGET_ENV_SUFFIXES).map(([target, suffix]) => [
       target, env[`CKAN_PACKAGE_ID_${suffix}`] || registry.targets[target].dataset_id || '',
@@ -103,13 +104,6 @@ function readArchive(target, archiveDir = ARCHIVE_DIR) {
   return posts;
 }
 
-function normalizeTags(tags) {
-  return [...new Set(tags.map((tag) => {
-    if (typeof tag !== 'string') throw new Error('ハッシュタグは文字列である必要があります。');
-    return tag.trim().replace(/^[#＃]+/, '');
-  }).filter(Boolean))].map((tag) => `#${tag}`).join(' ');
-}
-
 function stableId(slug) {
   // 元データには数値 ID がない。投稿 slug から、正の PostgreSQL int4 内の ID を作る。
   // 分類や配列順序には依存しない。同一入力内と送信先との衝突は別途検査する。
@@ -127,11 +121,6 @@ function mapRecord(post, target, config) {
     throw new Error(`${post.slug}: filename が不正です。`);
   }
   if (post.caption != null && typeof post.caption !== 'string') throw new Error(`${post.slug}: caption が不正です。`);
-  if (!Array.isArray(post.hashtag_names)) throw new Error(`${post.slug}: hashtag_names は配列が必要です。`);
-  if (typeof post.caution_flag !== 'boolean') throw new Error(`${post.slug}: caution_flag は真偽値が必要です。`);
-  if (post.location_alt != null && (typeof post.location_alt !== 'number' || !Number.isFinite(post.location_alt))) {
-    throw new Error(`${post.slug}: location_alt が不正です。`);
-  }
 
   const lat = post.location_lat;
   const lon = post.location_lng;
@@ -144,19 +133,11 @@ function mapRecord(post, target, config) {
   const observedAt = new Date(post.timestamp * 1000).toISOString();
   return {
     id: stableId(post.slug),
-    user_id: null,
-    slug: post.slug,
     timestamp: post.timestamp,
     lat,
     lon,
-    location_alt: post.location_alt == null ? '' : String(post.location_alt),
-    status: 'confirmed',
     caption: post.caption ?? '',
-    tags: normalizeTags([...TARGETS[target], ...post.hashtag_names, ...(post.caution_flag ? ['利用上の注意'] : [])]),
-    species: '',
-    filename: post.filename,
     image_url: new URL(encodeURIComponent(post.filename), config.imageBaseUrl).href,
-    source: 'repot',
     created_at: observedAt,
     updated_at: observedAt,
     deleted_at: null,
@@ -179,23 +160,20 @@ function buildPayload(targets, config, archiveDir = ARCHIVE_DIR) {
       }
       included += 1;
       const idOwner = idOwners.get(record.id);
-      if (idOwner && idOwner !== record.slug) throw new Error(`生成 ID が衝突しました: ${idOwner}, ${record.slug}`);
-      idOwners.set(record.id, record.slug);
-      const existing = bySlug.get(record.slug);
+      if (idOwner && idOwner !== post.slug) throw new Error(`生成 ID が衝突しました: ${idOwner}, ${post.slug}`);
+      idOwners.set(record.id, post.slug);
+      const existing = bySlug.get(post.slug);
       if (existing) {
-        const { tags: previousTags, ...previousFields } = existing;
-        const { tags: currentTags, ...currentFields } = record;
-        if (JSON.stringify(previousFields) !== JSON.stringify(currentFields)) {
-          throw new Error(`同じ slug の投稿内容が一致しません: ${record.slug}`);
+        if (JSON.stringify(existing) !== JSON.stringify(record)) {
+          throw new Error(`同じ slug の投稿内容が一致しません: ${post.slug}`);
         }
-        existing.tags = normalizeTags([...previousTags.split(' '), ...currentTags.split(' ')]);
       } else {
-        bySlug.set(record.slug, record);
+        bySlug.set(post.slug, record);
       }
     }
     summaries.push({ target, total: posts.length, included, skipped: posts.length - included });
   }
-  const records = [...bySlug.values()].sort((a, b) => a.slug.localeCompare(b.slug, 'en'));
+  const records = [...bySlug.entries()].sort(([a], [b]) => a.localeCompare(b, 'en')).map(([, record]) => record);
   if (!records.length) throw new Error('送信可能な投稿がありません。');
   return { payload: { resource_id: config.resourceId, method: 'upsert', records }, summaries, skipped };
 }
@@ -279,11 +257,22 @@ async function verifyUniqueId(fields, resourceId, config, fetchImpl) {
 
 async function preflight(payload, config, fetchImpl) {
   if (!['upsert', 'insert'].includes(payload.method)) throw new Error('未対応の登録方式です。');
+  if (!Array.isArray(payload.records) || !payload.records.length) throw new Error('送信する投稿がありません。');
+  payload.records.forEach(assertRecordFields);
+  const identity = (record) => {
+    if (!Number.isSafeInteger(Number(record.timestamp))) throw new Error('既存投稿の timestamp が不正です。');
+    return JSON.stringify([Number(record.timestamp), imageFilename(record.image_url)]);
+  };
+  const byId = new Map();
+  const byIdentity = new Map();
+  for (const record of payload.records) {
+    if (byId.has(String(record.id)) || byIdentity.has(identity(record))) throw new Error('送信する投稿の ID または日時・画像が重複しています。');
+    byId.set(String(record.id), record);
+    byIdentity.set(identity(record), record);
+  }
   const info = await ckanRequest('datastore_info', { resource_id: payload.resource_id }, config, fetchImpl);
-  if (!Array.isArray(info?.fields)) throw new Error('送信先の列情報が取得できませんでした。');
+  assertTableFields(info?.fields);
   const fields = new Map(info.fields.map((field) => [field.id, field]));
-  const missing = Object.keys(payload.records[0]).filter((name) => !fields.has(name));
-  if (missing.length) throw new Error(`送信先に列がありません: ${missing.join(', ')}`);
   if (payload.method === 'upsert') await verifyUniqueId(info.fields, payload.resource_id, config, fetchImpl);
   if (['int2', 'smallint'].includes(fields.get('id').type)) throw new Error('送信先 id 列の型には int4 以上が必要です。');
   for (const field of info.fields) {
@@ -292,15 +281,15 @@ async function preflight(payload, config, fetchImpl) {
     }
   }
 
-  const byId = new Map(payload.records.map((record) => [String(record.id), record]));
-  const bySlug = new Map(payload.records.map((record) => [record.slug, record]));
   for (let start = 0; start < payload.records.length; start += 100) {
     const batch = payload.records.slice(start, start + 100);
-    for (const key of ['id', 'slug']) {
+    // slug / source 列には依存しない。IDに加え、元の日時と画像名で同じ投稿か確認する。
+    // ホスト変更や BODIK への画像アップロードでも画像名は維持される。
+    for (const key of ['id', 'timestamp']) {
       const result = await ckanRequest('datastore_search', {
         resource_id: payload.resource_id,
         filters: { [key]: batch.map((record) => record[key]) },
-        fields: 'id,slug,source',
+        fields: 'id,timestamp,image_url',
         limit: 100,
         include_total: true,
       }, config, fetchImpl);
@@ -308,17 +297,19 @@ async function preflight(payload, config, fetchImpl) {
           || result.total !== result.records.length || result.records_truncated || result.total_was_estimated) {
         throw new Error('既存レコードの衝突確認が完了できませんでした。');
       }
-      if (payload.method === 'insert' && result.records.length) {
-        throw new Error(`新規追加モードですが、同じ ${key} の投稿が既にあります。二重登録を防ぐため停止しました。`);
-      }
       const seen = new Set();
       for (const row of result.records) {
-        const expected = key === 'id' ? byId.get(String(row.id)) : bySlug.get(row.slug);
-        if (!expected || String(row.id) !== String(expected.id) || row.slug !== expected.slug || row.source !== expected.source) {
-          throw new Error(`既存投稿と ID / slug / source が衝突しています: id=${row.id}, slug=${row.slug}`);
+        const expected = key === 'id' ? byId.get(String(row.id)) : byIdentity.get(identity(row));
+        // 同じ秒に別の画像が投稿されることは許容する。
+        if (key === 'timestamp' && !expected) continue;
+        if (payload.method === 'insert') {
+          throw new Error(`新規追加モードですが、同じ ID または日時・画像の投稿が既にあります。二重登録を防ぐため停止しました。`);
         }
-        if (seen.has(row.slug)) throw new Error(`送信先の slug が重複しています: ${row.slug}`);
-        seen.add(row.slug);
+        if (!expected || String(row.id) !== String(expected.id) || identity(row) !== identity(expected)) {
+          throw new Error(`既存投稿と ID / 日時 / 画像が衝突しています: id=${row.id}`);
+        }
+        if (seen.has(String(row.id))) throw new Error(`送信先の ID が重複しています: ${row.id}`);
+        seen.add(String(row.id));
       }
     }
   }
@@ -343,62 +334,44 @@ async function sendPayload(payload, config, fetchImpl, { images, onImage } = {})
 async function run(argv, { env = process.env, fetchImpl = globalThis.fetch, stdout = process.stdout, stderr = process.stderr } = {}) {
   const args = parseArgs(argv);
   if (args.help) {
-    stdout.write('使い方: node data/_bodik_odcs/upload_to_odcs.js [--dry-run | --send] [--upload-images] [--upload-csv] [--csv-dir directory] [--insert-only] [--force] [--target komaruKurage | --target chushikokuSakana] [--output plan.json]\n省略時は両方を対象に、外部通信しない dry-run を実行します。--upload-images で画像、--upload-csv でCSVの生成・送信も対象にします。CSVはJSON投稿表を更新した後の全件から作成します。--insert-only は既存の id / slug があれば停止する新規追加専用モードです。--force は読み取り専用 DataStore への書き込みを明示的に許可します（元CSVの再取込で変更が失われる可能性があります）。Node.js 18.17+ が必要です。\n');
+    stdout.write('使い方: node data/_bodik_odcs/upload_to_odcs.js [--dry-run | --send] [--target komaruKurage | --target chushikokuSakana] [--csv-dir directory] [--output plan.json] [--replace-legacy]\n通常実行は外部通信なしでCSVを生成します。送信するファイルはCSVのみです。--replace-legacy はCSVを検証した後、管理対象の旧画像・JSONをバックアップ付きで削除します。\n');
     return;
   }
+  const { generateCsvPlans, prepareCsvOnly, backupCsvOnly, publishCsvOnly } = require('./lib/csv_only');
   const config = loadConfig(env);
   if (args.csvDir) config.csvDir = path.resolve(args.csvDir);
-  const plans = buildUploadPlans(args.targets, config, args);
-  if (args.uploadCsv) for (const plan of plans) plan.csv = writeCsvPreview(plan, config.csvDir);
-  stderr.write(`${args.send ? 'SEND' : 'DRY RUN（外部通信なし）'}: ${config.baseUrl} / 分類別の ${plans.length} データセット\n`);
-  for (const plan of plans) {
-    stderr.write(`${plan.target}: dataset_id=${plan.dataset_id || '未設定'} / resource_id=${plan.payload.resource_id || '未設定'} / method=${plan.payload.method}\n`);
-    for (const summary of plan.summaries) stderr.write(`入力 ${summary.total} 件 / 採用 ${summary.included} 件 / 除外 ${summary.skipped} 件\n`);
-    for (const item of plan.skipped) stderr.write(`除外: ${item.target}/${item.slug}: ${item.reason}\n`);
-    if (plan.images) stderr.write(`画像: ${plan.images.length} 枚 / ${(plan.images.reduce((sum, image) => sum + image.size, 0) / 1024 / 1024).toFixed(2)} MiB\n`);
-    if (plan.csv) stderr.write(`CSVプレビュー: ${plan.csv.preview_path}\n`);
-  }
-  const review = {
-    type: 'repot-odcs-separated-upload-plan-v1',
-    datasets: plans.map((plan) => ({
-      target: plan.target, dataset_id: plan.dataset_id,
-      ...(plan.images ? imageReviewPlan(plan.payload, plan.images) : { payload: plan.payload }),
-      ...(plan.csv ? { csv: plan.csv } : {}),
-    })),
-  };
+  const plans = generateCsvPlans(args.targets.map((target) => ({ target, dataset_id: config.datasetIds[target],
+    ...buildPayload([target], { ...config, resourceId: undefined }),
+  })), config.csvDir);
+  const review = { type: 'repot-odcs-csv-only-plan-v1', image_base_url: config.imageBaseUrl,
+    replace_legacy: args.replaceLegacy, datasets: plans.map((plan) => ({ target: plan.target, dataset_id: plan.dataset_id,
+      csv_resource_id: config.definitions[plan.target].csv_resource_id || null, csv_path: plan.local_path,
+      records: plan.payload.records.length, fields: 9, sha256: plan.sha256, summaries: plan.summaries, skipped: plan.skipped })) };
   const json = `${JSON.stringify(review, null, 2)}\n`;
-  if (args.output) {
-    // 既存ファイルや元アーカイブを誤って上書きしない。
-    fs.writeFileSync(path.resolve(args.output), json, { flag: 'wx' });
-    stderr.write(`確認用 JSON を保存しました: ${path.resolve(args.output)}\n`);
-  }
+  if (args.output) fs.writeFileSync(path.resolve(args.output), json, { flag: 'wx' });
+  stderr.write(`${args.send ? 'SEND' : 'DRY RUN（外部通信なし）'}: CSVのみ / 画像URL: ${config.imageBaseUrl}\n`);
+  for (const plan of plans) stderr.write(`${plan.target}: ${plan.payload.records.length} 件 / 9列 / ${plan.local_path}\n`);
   if (!args.send) {
     if (!args.output) stdout.write(json);
-    return;
+    return review;
   }
-  await validateDestinations(plans, config, fetchImpl);
+  if (!config.apiKey.trim()) throw new Error('CKAN_API_KEY が未設定です。');
   const request = (action, params, method = 'GET') => ckanRequest(action, params, config, fetchImpl, method);
-  const csvPlans = [];
-  if (args.uploadCsv) for (const plan of plans) csvPlans.push(await prepareCsvUpload(plan, config, request));
-  const csvResults = [];
-  for (const [index, plan] of plans.entries()) {
-    await sendPayload(plan.payload, config, fetchImpl, {
-      images: plan.images,
-      onImage: ({ filename, action }) => stderr.write(`${plan.target} 画像 ${action}: ${filename}\n`),
-    });
-    stdout.write(`アップロード成功: ${plan.target} ${plan.payload.records.length} 件 / resource_id=${plan.payload.resource_id}\n`);
-    if (args.uploadCsv) {
-      const result = await uploadCsv(csvPlans[index], config, request, fetchImpl, config.csvDir);
-      csvResults.push(result);
-      writeCsvFile(path.join(config.csvDir, 'csv_upload_report.json'), Buffer.from(`${JSON.stringify(csvResults, null, 2)}\n`));
-      stdout.write(`CSV ${result.action}: ${plan.target} ${result.records} 件 / ${result.url}\n`);
-    }
-  }
+  const prepared = await prepareCsvOnly(plans, config, request, { replaceLegacy: args.replaceLegacy });
+  const backup = await backupCsvOnly(prepared, config, request, fetchImpl, path.join(config.csvDir, 'backups'));
+  stderr.write(`バックアップ: ${backup}\n`);
+  const reportPath = path.join(config.csvDir, 'csv_upload_report.json');
+  const report = await publishCsvOnly(prepared, config, request, fetchImpl, { backupPath: backup,
+    onProgress: (result) => writeCsvFile(reportPath, Buffer.from(`${JSON.stringify(result, null, 2)}\n`)) });
+  for (const result of report.csv) stdout.write(`CSV ${result.action}: ${result.target} ${result.records} 件 / ${result.url}\n`);
+  stdout.write(`旧リソース削除: ${report.deleted.length} 件\n`);
+  return report;
 }
 
 if (require.main === module) {
   run(process.argv.slice(2)).catch((error) => {
-    console.error(`実行失敗: ${error.message}`);
+    const message = process.env.CKAN_API_KEY ? error.message.replaceAll(process.env.CKAN_API_KEY, '[redacted]') : error.message;
+    console.error(`実行失敗: ${message}`);
     process.exitCode = 1;
   });
 }

@@ -1,0 +1,56 @@
+{
+  "date": "2026-11-20",
+  "delivery": "csv-only",
+  "image_base_url": "https://data.cocolab.jp/repot/",
+  "fields": [
+    "id",
+    "timestamp",
+    "lat",
+    "lon",
+    "caption",
+    "image_url",
+    "created_at",
+    "updated_at",
+    "deleted_at"
+  ],
+  "csv": [
+    {
+      "target": "komaruKurage",
+      "action": "update",
+      "resource_id": "1c861a5a-2b3d-4252-b973-3a75b35669a5",
+      "url": "https://data.bodik.jp/dataset/a08a92b9-b794-4b72-a610-e28d469c7315/resource/1c861a5a-2b3d-4252-b973-3a75b35669a5/download/komarukurage.csv",
+      "records": 9,
+      "fields": 9,
+      "sha256": "65b143abd67bd58eb982b4d8a35bd98f27dcacdab815cbedf9960c8c007d55e0",
+      "verified": true,
+      "datastore_active": false,
+      "public_download_verified": true,
+      "csv_only_verified": true
+    },
+    {
+      "target": "chushikokuSakana",
+      "action": "update",
+      "resource_id": "58db4a32-57e4-4416-b648-91f0c1bea5b2",
+      "url": "https://data.bodik.jp/dataset/0766a173-bc08-448b-a5e3-5a537b80323a/resource/58db4a32-57e4-4416-b648-91f0c1bea5b2/download/chushikokusakana.csv",
+      "records": 10,
+      "fields": 9,
+      "sha256": "02e3ea12f20bcfd0c6865959f552ad6baff34c9748e66a33514238d138690487",
+      "verified": true,
+      "datastore_active": false,
+      "public_download_verified": true,
+      "csv_only_verified": true
+    }
+  ],
+  "deleted_images": 38,
+  "deleted_json_resources": 2,
+  "stale_csv_caches_removed": 2,
+  "automatic_csv_import_available": false,
+  "original_sample_records_unchanged": 126,
+  "backups": [
+    "/Users/yukimat/Dropbox/Work/外部予算/202006_さきがけ/project/レポっと/system-archives/data/_bodik_odcs/output/csv_only_migration_20261120/new/backups/csv_only_6783b6d6-bd9f-452e-94ac-9b07b90de2af",
+    "/Users/yukimat/Dropbox/Work/外部予算/202006_さきがけ/project/レポっと/system-archives/data/_bodik_odcs/output/csv_only_migration_20261120/trial_backup_1795177757979",
+    "data/_bodik_odcs/output/csv_only_migration_20261120/before.json",
+    "data/_bodik_odcs/output/csv_only_migration_20261120/stale_csv_cache_backup.json"
+  ],
+  "verified": true
+}

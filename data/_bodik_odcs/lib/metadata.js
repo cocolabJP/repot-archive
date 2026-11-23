@@ -37,7 +37,7 @@ function tableMetadata(target, definition) {
 function imageMetadata(image, definition = {}) {
   const tag = definition.source_tag ? `「${definition.source_tag}」タグの` : '';
   const source = definition.source_url || 'https://repot-archive.cocolab.jp/';
-  const description = `【試行中】\nレポっとに投稿された${tag}写真です。記録日時、位置情報、コメント等は、投稿データの同じファイル名の行を参照してください。\n出典：レポっと Archives\n${source}\nクレジット：© repot contributors (modified)`;
+  const description = `【試行中】\nレポっとに投稿された${tag}写真です。記録日時、位置情報、コメント等は、投稿データの image_url がこの写真を指す行を参照してください。\n出典：レポっと Archives\n${source}\nクレジット：© repot contributors (modified)`;
   return {
     name: imageName(image.filename),
     description: managedDescription(description, `${IMAGE_MARKER}${JSON.stringify({ filename: image.filename, sha256: image.sha256 })}`),
@@ -58,20 +58,22 @@ function readImageMetadata(description) {
 
 function csvMetadata(target, definition, metadata) {
   const source = definition.source_url || 'https://repot-archive.cocolab.jp/';
+  const marker = metadata.table_resource_id
+    ? `${CSV_MARKER}${JSON.stringify({ target, table_resource_id: metadata.table_resource_id, sha256: metadata.sha256 })}`
+    : `repot-csv-v2:${JSON.stringify({ target, sha256: metadata.sha256 })}`;
   return {
     name: `${definition.resource_name || target}_CSV`,
-    description: managedDescription(`【試行中】\n投稿データの全17項目をCSV形式で収録しています。JSON形式の投稿表を更新した後の全件を出力しています。文字コードはUTF-8（BOM付き）、行の区切りはCRLFです。空欄は空文字または欠損値を表します。日時はUTCです。\n出典：レポっと Archives\n${source}\nクレジット：© repot contributors (modified)`,
-      `${CSV_MARKER}${JSON.stringify({ target, table_resource_id: metadata.table_resource_id, sha256: metadata.sha256 })}`),
+    description: managedDescription(`【試行中】\n最新スキーマの登録用9項目（id、timestamp、lat、lon、caption、image_url、created_at、updated_at、deleted_at）をCSV形式で収録しています。DataStoreが自動付与する _id は含みません。レポっとの公開アーカイブから変換した全件を出力しています。写真は image_url が指す外部サイトから取得できます。文字コードはUTF-8（BOM付き）、行の区切りはCRLFです。空欄は空文字または欠損値を表します。timestamp はUTC epoch秒、created_at・updated_at・deleted_at はUTC日時です。\n出典：レポっと Archives\n${source}\nクレジット：© repot contributors (modified)`, marker),
   };
 }
 
 function readCsvMetadata(description) {
   const raw = typeof description === 'string'
-    ? description.match(/<!--\s*repot-csv-v1:(\{[\s\S]*?\})\s*-->/)?.[1] : null;
+    ? description.match(/<!--\s*repot-csv-v[12]:(\{[\s\S]*?\})\s*-->/)?.[1] : null;
   if (!raw) return null;
   const value = JSON.parse(raw);
   if (!['komaruKurage', 'chushikokuSakana'].includes(value?.target)
-      || typeof value.table_resource_id !== 'string' || !/^[0-9a-f]{64}$/.test(value.sha256)) {
+      || (value.table_resource_id !== undefined && typeof value.table_resource_id !== 'string') || !/^[0-9a-f]{64}$/.test(value.sha256)) {
     throw new Error('CSVの管理情報が不正です。');
   }
   return value;

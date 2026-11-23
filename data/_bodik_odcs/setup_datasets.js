@@ -4,14 +4,11 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
-const { loadConfig, ckanRequest, verifyUniqueId } = require('./upload_to_odcs');
-const { datasetMarker, tableMarker, datasetMetadata, tableMetadata } = require('./lib/metadata');
+const { loadConfig, ckanRequest } = require('./upload_to_odcs');
+const { datasetMarker, datasetMetadata } = require('./lib/metadata');
+const { DATASTORE_FIELDS: FIELDS } = require('./lib/odcs_schema');
 
 const REGISTRY_PATH = path.join(__dirname, 'config', 'datasets.json');
-const NUMERIC_FIELDS = new Set(['id', 'user_id', 'timestamp', 'lat', 'lon']);
-const FIELDS = ['id', 'user_id', 'slug', 'timestamp', 'lat', 'lon', 'location_alt', 'status',
-  'caption', 'tags', 'species', 'filename', 'image_url', 'source', 'created_at', 'updated_at', 'deleted_at']
-  .map((id) => ({ id, type: NUMERIC_FIELDS.has(id) ? 'numeric' : 'text' }));
 
 function saveRegistry(registry, filename) {
   const temporary = `${filename}.${randomUUID()}.tmp`;
@@ -34,7 +31,7 @@ async function provision({ send = false, config = loadConfig(process.env), fetch
   }
   if (!send) {
     stdout.write(`${JSON.stringify({ owner_org: registry.owner_org, license_id: registry.license_id,
-      datasets: registry.targets, fields: FIELDS, primary_key: ['id'] }, null, 2)}\n`);
+      datasets: registry.targets, delivery: 'csv-only', fields: FIELDS }, null, 2)}\n`);
     return registry;
   }
   if (!config.apiKey.trim()) throw new Error('CKAN_API_KEY が未設定です。');
@@ -74,36 +71,7 @@ async function provision({ send = false, config = loadConfig(process.env), fetch
       stdout.write(`データセット作成: ${definition.title} / ${dataset.id}\n`);
     }
     definition.dataset_id = dataset.id;
-    dataset = await request('package_show', { id: dataset.id });
-    const presentation = tableMetadata(target, definition);
-    const candidates = (dataset.resources || []).filter((resource) => resource.id === definition.resource_id
-      || resource.name === presentation.name || resource.name === `${target}.json`);
-    if (candidates.length > 1) throw new Error(`${target}: 表データのリソースが重複しています。`);
-    let table = candidates[0];
-    if (table && (!table.description?.includes(tableMarker(target)) || table.package_id !== dataset.id
-        || (definition.resource_id && table.id !== definition.resource_id))) {
-      throw new Error(`${target}: 同名の管理対象外リソースがあります。`);
-    }
-    if (!table) {
-      if (definition.resource_id) throw new Error(`${target}: 保存済みの表データが見つかりません。`);
-      const created = await request('datastore_create', {
-        resource: { package_id: dataset.id, ...presentation, format: 'JSON', url_type: 'datastore' },
-        fields: FIELDS,
-        primary_key: ['id'],
-        records: [],
-      }, 'POST');
-      if (!created.resource_id) throw new Error(`${target}: 作成された表データの ID が取得できません。`);
-      definition.resource_id = created.resource_id;
-      saveRegistry(registry, registryPath);
-      table = await request('resource_show', { id: created.resource_id });
-      stdout.write(`投稿表作成: ${target} / ${table.id}\n`);
-    }
-    if (table.package_id !== dataset.id || table.url_type !== 'datastore') throw new Error(`${target}: 作成先または投稿表の種類が一致しません。`);
-    const info = await request('datastore_info', { resource_id: table.id });
-    const fields = new Map((info.fields || []).map((field) => [field.id, field]));
-    if (FIELDS.some((field) => fields.get(field.id)?.type !== field.type)) throw new Error(`${target}: 投稿表の列が一致しません。`);
-    await verifyUniqueId(info.fields, table.id, config, fetchImpl);
-    definition.resource_id = table.id;
+    // CSV専用構成ではJSON投稿表・画像リソースを作成しない。
     saveRegistry(registry, registryPath);
     stdout.write(`送信先確認: ${config.baseUrl}/dataset/${definition.name}\n`);
   }
@@ -127,4 +95,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { provision, FIELDS, datasetMarker, tableMarker };
+module.exports = { provision, FIELDS, datasetMarker };

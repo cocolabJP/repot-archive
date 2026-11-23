@@ -16,7 +16,7 @@ function fixture() {
     chushikokuSakana: { name: 'repot-chushikoku-sakana', title: '魚', dataset_id: '', resource_id: '' },
   } };
   fs.writeFileSync(filename, JSON.stringify(registry));
-  const state = { calls: [], datasets: [{ id: 'source-dataset', owner_org: 'test-org', license_id: registry.license_id, resources: [] }] };
+  const state = { calls: [], extraFields: [], datasets: [{ id: 'source-dataset', owner_org: 'test-org', license_id: registry.license_id, resources: [] }] };
   state.fetchImpl = async (rawUrl, options) => {
     const url = new URL(rawUrl);
     const action = url.pathname.split('/').pop();
@@ -33,7 +33,8 @@ function fixture() {
     } else if (action === 'datastore_create') {
       assert.equal(params.force, undefined);
       assert.deepEqual(params.primary_key, ['id']);
-      assert.equal(params.fields.length, 17);
+      assert.deepEqual(params.fields.map((field) => field.id),
+        ['id', 'timestamp', 'lat', 'lon', 'caption', 'image_url', 'created_at', 'updated_at', 'deleted_at']);
       const dataset = state.datasets.find((dataset) => dataset.id === params.resource.package_id);
       assert.notEqual(dataset.id, 'source-dataset');
       const resource = { ...params.resource, id: `table-${dataset.id}` };
@@ -42,7 +43,8 @@ function fixture() {
     } else if (action === 'resource_show') {
       result = state.datasets.flatMap((dataset) => dataset.resources).find((resource) => resource.id === params.id);
     } else if (action === 'datastore_info') {
-      result = { fields: FIELDS.map((field) => ({ ...field, schema: { uniquekey: field.id === 'id' } })) };
+      result = { fields: [...FIELDS, { id: '_id', type: 'int4' }, ...state.extraFields]
+        .map((field) => ({ ...field, schema: { uniquekey: field.id === 'id' } })) };
     } else assert.fail(action);
     return { ok: true, status: 200, json: async () => ({ success: true, result }) };
   };
@@ -61,17 +63,18 @@ test('データセット作成の通常実行は外部通信・設定変更を�
   } finally { f.close(); }
 });
 
-test('独立した2データセットに新しい投稿表を作り、再実行は管理対象だけ再利用する', async () => {
+test('独立した2データセットだけを作り、JSON表や画像は作成しない', async () => {
   const f = fixture();
   try {
     const options = { send: true, registryPath: f.filename, config, stdout: sink, fetchImpl: f.state.fetchImpl };
     const result = await provision(options);
     const ids = Object.values(result.targets).map((target) => target.dataset_id);
     assert.equal(new Set(ids).size, 2);
-    assert.ok(Object.values(result.targets).every((target) => target.resource_id));
-    assert.equal(f.state.calls.filter((call) => call.method === 'POST').length, 4);
+    assert.ok(Object.values(result.targets).every((target) => !target.resource_id));
+    assert.ok(f.state.datasets.every((dataset) => dataset.resources.length === 0));
+    assert.equal(f.state.calls.filter((call) => call.method === 'POST').length, 2);
     await provision(options);
-    assert.equal(f.state.calls.filter((call) => call.method === 'POST').length, 4);
+    assert.equal(f.state.calls.filter((call) => call.method === 'POST').length, 2);
     assert.deepEqual(f.state.datasets[0].resources, []);
   } finally { f.close(); }
 });
@@ -82,6 +85,18 @@ test('同名の別組織データセットは変更せず、どちらも作成�
     notes: datasetMarker('chushikokuSakana'), resources: [] });
   try {
     await assert.rejects(provision({ send: true, registryPath: f.filename, config, stdout: sink, fetchImpl: f.state.fetchImpl }), /管理対象/);
+    assert.ok(f.state.calls.every((call) => call.method === 'GET'));
+  } finally { f.close(); }
+});
+
+test('データセット再確認時もDataStoreの作成・変更を行わない', async () => {
+  const f = fixture();
+  try {
+    const options = { send: true, registryPath: f.filename, config, stdout: sink, fetchImpl: f.state.fetchImpl };
+    await provision(options);
+    f.state.calls.length = 0;
+    f.state.extraFields.push({ id: 'slug', type: 'text' });
+    await provision(options);
     assert.ok(f.state.calls.every((call) => call.method === 'GET'));
   } finally { f.close(); }
 });

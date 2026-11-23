@@ -4,9 +4,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { createHash, randomUUID } = require('node:crypto');
 const { datasetMarker, csvMetadata, readCsvMetadata, normalizeMetadataText } = require('./metadata');
+const { RECORD_FIELDS, assertRecordFields, imageFilename } = require('./odcs_schema');
 
-const CSV_FIELDS = ['id', 'user_id', 'slug', 'timestamp', 'lat', 'lon', 'location_alt', 'status',
-  'caption', 'tags', 'species', 'filename', 'image_url', 'source', 'created_at', 'updated_at', 'deleted_at'];
+const CSV_FIELDS = RECORD_FIELDS;
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
 function csvCell(value) {
@@ -21,7 +21,7 @@ function csvCell(value) {
 function serializeCsv(records) {
   const lines = [CSV_FIELDS.join(',')];
   for (const record of records) {
-    if (CSV_FIELDS.some((field) => !Object.hasOwn(record, field))) throw new Error('CSVに必要な項目がありません。');
+    assertRecordFields(record);
     lines.push(CSV_FIELDS.map((field) => csvCell(record[field])).join(','));
   }
   return Buffer.from(`\uFEFF${lines.join('\r\n')}\r\n`, 'utf8');
@@ -76,7 +76,7 @@ async function readCsvRecords(resourceId, request) {
   let total;
   while (total === undefined || records.length < total) {
     const page = await request('datastore_search', { resource_id: resourceId, fields: CSV_FIELDS.join(','),
-      limit: 1000, offset: records.length, sort: 'slug asc', include_total: true });
+      limit: 1000, offset: records.length, sort: 'id asc', include_total: true });
     if (!Number.isSafeInteger(page?.total) || !Array.isArray(page.records) || page.records_truncated || page.total_was_estimated
         || (total !== undefined && page.total !== total) || (!page.records.length && records.length < page.total)) {
       throw new Error('CSV用の投稿データを全件取得できません。');
@@ -96,8 +96,13 @@ async function readCsvRecords(resourceId, request) {
 async function uploadCsv(prepared, config, request, fetchImpl, directory) {
   const { plan, definition, existing } = prepared;
   const records = await readCsvRecords(plan.payload.resource_id, request);
-  const expected = new Map(plan.payload.records.map((record) => [record.slug, String(record.id)]));
-  for (const record of records) if (expected.get(record.slug) === String(record.id)) expected.delete(record.slug);
+  const expected = new Map(plan.payload.records.map((record) => [String(record.id), record]));
+  for (const record of records) {
+    const sent = expected.get(String(record.id));
+    if (sent && Number(record.timestamp) === sent.timestamp && imageFilename(record.image_url) === imageFilename(sent.image_url)) {
+      expected.delete(String(record.id));
+    }
+  }
   if (expected.size) throw new Error('送信した投稿がCSVの元データに見つかりません。');
   const bytes = serializeCsv(records);
   fs.mkdirSync(directory, { recursive: true });

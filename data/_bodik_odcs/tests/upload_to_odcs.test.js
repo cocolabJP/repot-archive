@@ -16,6 +16,7 @@ const post = {
 const record = mapRecord(post, 'komaruKurage', config);
 const payload = { resource_id: config.resourceId, method: 'upsert', records: [record] };
 const sink = { write() {} };
+const fields = ['id', 'timestamp', 'lat', 'lon', 'caption', 'image_url', 'created_at', 'updated_at', 'deleted_at'];
 
 function mockCkan({ existing = [], changeInfo, errorAction, malformedAction } = {}) {
   const calls = [];
@@ -28,13 +29,15 @@ function mockCkan({ existing = [], changeInfo, errorAction, malformedAction } = 
     if (malformedAction === action) return { ok: true, status: 200, json: async () => { throw new Error('invalid JSON'); } };
     let result = {};
     if (action === 'datastore_info') {
-      result = { fields: Object.keys(record).map((id) => ({
+      result = { fields: ['_id', ...fields].map((id) => ({
         id, type: id === 'id' ? 'int4' : 'text', schema: { uniquekey: id === 'id', notnull: false },
       })) };
       if (changeInfo) changeInfo(result);
     } else if (action === 'datastore_search') {
       assert.equal(options.method, 'GET');
+      assert.equal(url.searchParams.get('fields'), 'id,timestamp,image_url');
       const filters = JSON.parse(url.searchParams.get('filters'));
+      assert.ok(['id', 'timestamp'].includes(Object.keys(filters)[0]));
       const key = Object.keys(filters)[0];
       const records = existing.filter((item) => filters[key].map(String).includes(String(item[key])));
       result = { records, total: records.length };
@@ -59,26 +62,23 @@ test('実データの両方を読み、位置情報欠損の除外を報告す�
   }
   assert.equal(new Set(result.payload.records.map((item) => item.id)).size, result.payload.records.length);
   for (const item of result.payload.records) {
-    assert.equal(item.source, 'repot');
+    assert.deepEqual(Object.keys(item), fields);
     assert.notDeepEqual([item.lat, item.lon], [-1, -1]);
-    assert.ok(item.tags.includes('#困クラゲ') || item.tags.includes('#中四国魚'));
     assert.equal(item.created_at, new Date(item.timestamp * 1000).toISOString());
     assert.equal('location_acc' in item, false);
   }
 });
 
-test('epoch 秒をそのまま保持し、タグ・画像 URL・欠損値を変換する', () => {
+test('最新の登録用9項目だけを生成し、元のID・epoch秒・画像URL・欠損値を保持する', () => {
   assert.equal(record.timestamp, 1745721236);
   assert.equal(record.created_at, '2025-04-27T02:33:56.000Z');
   assert.equal(record.updated_at, record.created_at);
   assert.equal(record.caption, '');
-  assert.equal(record.location_alt, '0');
-  assert.equal(record.user_id, null);
+  assert.deepEqual(Object.keys(record), fields);
   assert.equal(record.deleted_at, null);
-  assert.equal(record.tags, '#困クラゲ #クラゲ #海');
   assert.equal(record.image_url, 'https://data.cocolab.jp/repot/20250427113356_7c7ed.png');
   const fish = mapRecord({ ...post, hashtag_names: [], caution_flag: true }, 'chushikokuSakana', config);
-  assert.equal(fish.tags, '#中四国魚 #魚 #利用上の注意');
+  assert.deepEqual(fish, record);
   assert.equal(fish.id, record.id);
   assert.equal(stableId(post.slug), record.id);
   assert.ok(record.id >= 1_000_000_000 && record.id <= 2_147_483_647);
@@ -89,12 +89,12 @@ test('欠損座標は除外し、不正な座標・日時・投稿は失敗す�
   assert.equal(mapRecord({ ...post, location_lat: null }, 'komaruKurage', config), null);
   assert.equal(mapRecord({ ...post, location_lat: 0, location_lng: 0 }, 'komaruKurage', config).lat, 0);
   for (const patch of [{ location_lat: 91 }, { location_lng: '133' }, { timestamp: '1745721236' },
-    { timestamp: NaN }, { slug: '' }, { filename: '../a.png' }, { hashtag_names: null }]) {
+    { timestamp: NaN }, { slug: '' }, { filename: '../a.png' }, { caption: [] }]) {
     assert.throws(() => mapRecord({ ...post, ...patch }, 'komaruKurage', config));
   }
 });
 
-test('同じ投稿を両方に含むときはタグを統合し、内容の不一致は停止する', () => {
+test('内部でslugによる重複をまとめ、9項目の内容の不一致は停止する', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'odcs-test-'));
   const save = (target, value) => fs.writeFileSync(path.join(dir, `${target}.js`),
     `const archive_${target} = ${JSON.stringify([value])};\nexport default archive_${target};`);
@@ -103,7 +103,7 @@ test('同じ投稿を両方に含むときはタグを統合し、内容の不�
     save('chushikokuSakana', post);
     const result = buildPayload(['komaruKurage', 'chushikokuSakana'], config, dir);
     assert.equal(result.payload.records.length, 1);
-    assert.equal(result.payload.records[0].tags, '#困クラゲ #クラゲ #海 #中四国魚 #魚');
+    assert.deepEqual(result.payload.records[0], record);
     save('chushikokuSakana', { ...post, caption: '別の内容' });
     assert.throws(() => buildPayload(['komaruKurage', 'chushikokuSakana'], config, dir), /一致しません/);
     fs.appendFileSync(path.join(dir, 'komaruKurage.js'), '\nthrow new Error("実行してはいけない");');
@@ -134,7 +134,7 @@ test('payload の保存は有効な JSON で、既存ファイルは上書きし
     await run(['--output', file], options);
     const output = JSON.parse(fs.readFileSync(file, 'utf8'));
     assert.equal(output.datasets.length, 2);
-    assert.ok(output.datasets.every((dataset) => dataset.payload.method === 'upsert'));
+    assert.ok(output.datasets.every((dataset) => dataset.fields === 9 && dataset.csv_path.endsWith('.csv')));
     await assert.rejects(run(['--output', file], options), /EEXIST/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -146,9 +146,9 @@ test('送信前にキー・列・一意キー・null 制約を検証し、不備
   await assert.rejects(sendPayload(payload, config, noKey.fetchImpl), /CKAN_API_KEY/);
   assert.equal(noKey.calls.length, 0);
   const changes = [
-    (info) => { info.fields = info.fields.filter((item) => item.id !== 'tags'); },
+    (info) => { info.fields = info.fields.filter((item) => item.id !== 'caption'); },
     (info) => { info.fields.find((item) => item.id === 'id').schema.uniquekey = false; },
-    (info) => { info.fields.find((item) => item.id === 'user_id').schema.notnull = true; },
+    (info) => { info.fields.find((item) => item.id === 'deleted_at').schema.notnull = true; },
   ];
   for (const changeInfo of changes) {
     const mock = mockCkan({ changeInfo });
@@ -157,14 +157,43 @@ test('送信前にキー・列・一意キー・null 制約を検証し、不備
   }
 });
 
-test('既存データの ID・slug・source の衝突では POST しない', async () => {
+test('既存データのID・日時・画像の衝突ではPOSTしない', async () => {
   for (const existing of [
-    [{ ...record, slug: 'other' }], [{ ...record, id: record.id + 1 }],
-    [{ ...record, source: 'other' }], [record, record],
+    [{ ...record, timestamp: record.timestamp + 1 }], [{ ...record, id: record.id + 1 }],
+    [{ ...record, image_url: 'https://example.org/other.png' }], [record, record],
   ]) {
     const mock = mockCkan({ existing });
     await assert.rejects(sendPayload(payload, { ...config, apiKey: 'test-only-key' }, mock.fetchImpl), /衝突|重複/);
     assert.ok(mock.calls.every((call) => call.options.method === 'GET'));
+  }
+});
+
+test('削除された項目・source・自動採番_idの混入は全レコードを確認し、通信前に拒否する', async () => {
+  for (const removed of ['user_id', 'slug', 'location_alt', 'status', 'tags', 'species', 'filename', 'source', '_id']) {
+    const mock = mockCkan();
+    const invalid = { ...payload, records: [record, { ...record, id: record.id + 1, [removed]: 'old-value' }] };
+    await assert.rejects(sendPayload(invalid, { ...config, apiKey: 'test-only-key' }, mock.fetchImpl), /9項目/);
+    assert.equal(mock.calls.length, 0);
+  }
+});
+
+test('旧スキーマの列がある送信先では、列やデータを削除せずに停止する', async () => {
+  const mock = mockCkan({ changeInfo: (info) => {
+    info.fields.push(...['user_id', 'slug', 'location_alt', 'status', 'tags', 'species', 'filename', 'source']
+      .map((id) => ({ id, type: 'text' })));
+  } });
+  await assert.rejects(sendPayload(payload, { ...config, apiKey: 'test-only-key' }, mock.fetchImpl), /最新スキーマ.*自動削除しません/);
+  assert.deepEqual(mock.calls.map((call) => call.action), ['datastore_info']);
+});
+
+test('画像ホストの変更は同一投稿として扱い、同じ秒に撮った別画像の投稿も許容する', async () => {
+  for (const method of ['upsert', 'insert']) {
+    const existing = [{ ...record, id: record.id + 1, image_url: 'https://example.org/another.png' }];
+    if (method === 'upsert') existing.push({ ...record, caption: '更新前',
+      image_url: `https://data.bodik.jp/dataset/photos/resource/photo/download/${post.filename}` });
+    const mock = mockCkan({ existing });
+    await sendPayload({ ...payload, method }, { ...config, apiKey: 'test-only-key' }, mock.fetchImpl);
+    assert.equal(mock.calls.at(-1).action, 'datastore_upsert');
   }
 });
 
@@ -178,33 +207,25 @@ test('模擬 API では全事前確認後に一度だけ POST し、再送時も
   }
 });
 
-test('新規追加モードは一意キー未設定の表に insert し、既存 id / slug があれば POST しない', async () => {
+test('新規追加モードは一意キー未設定の表に insert し、既存IDまたは日時・画像があればPOSTしない', async () => {
   const insertPayload = { ...payload, method: 'insert' };
   const options = { changeInfo: (info) => { info.fields.find((item) => item.id === 'id').schema.uniquekey = false; } };
   const fresh = mockCkan(options);
   await sendPayload(insertPayload, { ...config, apiKey: 'test-only-key' }, fresh.fetchImpl);
   assert.equal(JSON.parse(fresh.calls.at(-1).options.body).method, 'insert');
-  for (const existing of [[record], [{ ...record, id: record.id + 1 }], [{ ...record, slug: 'other' }]]) {
+  for (const existing of [[record], [{ ...record, id: record.id + 1 }], [{ ...record, timestamp: record.timestamp + 1 }]]) {
     const mock = mockCkan({ ...options, existing });
     await assert.rejects(sendPayload(insertPayload, { ...config, apiKey: 'test-only-key' }, mock.fetchImpl), /二重登録/);
     assert.ok(mock.calls.every((call) => call.options.method === 'GET'));
   }
 });
 
-test('読み取り専用 DataStore への force は明示指定した場合だけ payload に入る', async () => {
-  for (const force of [false, true]) {
-    let output = '';
-    await run(['--insert-only', '--dry-run', ...(force ? ['--force'] : [])], {
-      env: {}, stdout: { write: (value) => { output += value; } }, stderr: sink,
-      fetchImpl: async () => assert.fail('外部通信禁止'),
-    });
-    const data = JSON.parse(output);
-    assert.ok(data.datasets.every((dataset) => dataset.payload.method === 'insert'));
-    assert.ok(data.datasets.every((dataset) => dataset.payload.force === (force ? true : undefined)));
+test('旧画像・JSON用オプションはsendでも通信前に拒否する', async () => {
+  for (const option of ['--upload-images', '--insert-only', '--force']) {
+    await assert.rejects(run(['--send', option], {
+      env: {}, stdout: sink, stderr: sink, fetchImpl: async () => assert.fail('通信禁止'),
+    }), /CSVのみ/);
   }
-  const mock = mockCkan();
-  await sendPayload({ ...payload, method: 'insert', force: true }, { ...config, apiKey: 'test-only-key' }, mock.fetchImpl);
-  assert.equal(JSON.parse(mock.calls.at(-1).options.body).force, true);
 });
 
 test('クラゲと魚の表・画像・送信先を分離し、同じデータセットの設定を拒否する', async () => {
@@ -215,9 +236,11 @@ test('クラゲと魚の表・画像・送信先を分離し、同じデータ�
   const plans = buildUploadPlans(['komaruKurage', 'chushikokuSakana'], cfg, { uploadImages: true });
   assert.deepEqual(plans.map((plan) => plan.payload.resource_id), ['kurage-table', 'fish-table']);
   for (const plan of plans) {
-    const slugs = new Set(readArchive(plan.target).map((post) => post.slug));
-    assert.ok(plan.payload.records.every((record) => slugs.has(record.slug)));
-    assert.deepEqual(new Set(plan.images.map((image) => image.filename)), new Set(plan.payload.records.map((record) => record.filename)));
+    const ids = new Set(readArchive(plan.target).map((post) => stableId(post.slug)));
+    assert.ok(plan.payload.records.every((record) => ids.has(record.id)));
+    assert.deepEqual(new Set(plan.images.map((image) => image.filename)),
+      new Set(plan.payload.records.map((record) => decodeURIComponent(new URL(record.image_url).pathname.split('/').pop()))));
+    assert.ok(plan.payload.records.every((record) => JSON.stringify(Object.keys(record)) === JSON.stringify(fields)));
   }
   assert.throws(() => buildUploadPlans(['komaruKurage', 'chushikokuSakana'],
     { ...cfg, datasetIds: { komaruKurage: 'same', chushikokuSakana: 'same' } }), /別々のデータセット/);
@@ -228,11 +251,6 @@ test('クラゲと魚の表・画像・送信先を分離し、同じデータ�
       json: async () => ({ success: true, result: { package_id: url.searchParams.get('id') === 'kurage-table' ? 'kurage-dataset' : 'fish-dataset' } }) });
     return mock.fetchImpl(rawUrl, options);
   };
-  await run(['--send'], { env, fetchImpl, stdout: sink, stderr: sink });
-  const sent = mock.calls.filter((call) => call.options.method === 'POST').map((call) => JSON.parse(call.options.body));
-  assert.equal(sent.length, 2);
-  assert.deepEqual(sent.map((item) => item.resource_id), ['kurage-table', 'fish-table']);
-  assert.ok(sent.every((item) => item.force === undefined));
   await assert.rejects(validateDestinations(plans, cfg, async () => ({ ok: true, status: 200,
     json: async () => ({ success: true, result: { package_id: 'wrong-dataset' } }) })), /所属データセット/);
 });

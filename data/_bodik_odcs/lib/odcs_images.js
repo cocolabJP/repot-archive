@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { createHash } = require('node:crypto');
 const { imageMetadata, legacyImageName, readImageMetadata } = require('./metadata');
+const { imageFilename } = require('./odcs_schema');
 
 const IMAGE_TYPES = {
   '.png': { mimetype: 'image/png', format: 'PNG' },
@@ -30,7 +31,7 @@ function checkImage(bytes, format, filename) {
 function buildImagePlan(payload, imageDir, definition = {}) {
   const files = new Map();
   for (const record of payload.records) {
-    const filename = record.filename;
+    const filename = imageFilename(record.image_url);
     if (!filename || path.basename(filename) !== filename || /[\\/]/.test(filename)) throw new Error('画像ファイル名が不正です。');
     if (files.has(filename)) continue;
     const type = IMAGE_TYPES[path.extname(filename).toLowerCase()];
@@ -135,8 +136,9 @@ function attachImageUrls(payload, uploads) {
   return {
     ...payload,
     records: payload.records.map((record) => {
-      const image = uploads.get(record.filename);
-      if (!image?.url) throw new Error(`${record.filename}: アップロード後の URL がありません。`);
+      const filename = imageFilename(record.image_url);
+      const image = uploads.get(filename);
+      if (!image?.url) throw new Error(`${filename}: アップロード後の URL がありません。`);
       return { ...record, image_url: image.url };
     }),
   };
