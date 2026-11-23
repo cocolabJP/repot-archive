@@ -1,4 +1,5 @@
 import { HASHTAG_LIST, ARCHIVES } from "../../data/archives.js"
+import { ArchiveMap, isValidLocation } from "./archive-map.js?v=6.6"
 var PHOTO_URL_BASE = 'https://data.cocolab.jp/repot-thumb/'
 const DESKTOP_MIN_WIDTH = 1200;
 const DIALOG_ACTIONS = {
@@ -13,8 +14,7 @@ var app = new Vue({
   el: '#app',
   data: {
     map: null,
-    layer: null,
-    markers: {},
+    mapStatus: { loading: true, error: '' },
     hashtag: {
       list: HASHTAG_LIST,
       selected: null,
@@ -53,7 +53,6 @@ var app = new Vue({
     periodError: '',
   },
   created: function() {
-    this._openPopup = null;
     this._viewportFrame = null;
   },
   mounted: function() {
@@ -153,8 +152,7 @@ var app = new Vue({
           this.$refs.infoTrigger.getBoundingClientRect().bottom,
         ) - this.$refs.viewContainer.getBoundingClientRect().top) + 12 : 0;
         if (this.map) {
-          this.map.invalidateSize();
-          if (this.map.attributionControl) this.map.attributionControl.setPosition(this.isMobile ? 'bottomleft' : 'bottomright');
+          this.map.resize();
         }
         this.updatePopupLayout();
         this.refreshLazyload();
@@ -181,7 +179,7 @@ var app = new Vue({
     resizeDivider(ratio) {
       this.view.divideRatio = Math.max(0.2, Math.min(0.8, ratio));
       this.$nextTick(() => {
-        if (this.map) this.map.invalidateSize();
+        if (this.map) this.map.resize();
         this.updatePopupLayout();
       });
     },
@@ -271,15 +269,12 @@ var app = new Vue({
       this.sheet.pointerId = null;
       this.sheet.ignoreClick = false;
     },
-    updatePopupLayout(popup = this._openPopup) {
-      if (!popup || !popup.isOpen()) return;
-      const top = this.isMobile ? this.view.headerBottom : 16;
-      const bottom = this.isMobile ? this.sheetHeight + 16 : 16;
-      const height = this.isMobile ? this.view.wh : this.map.getSize().y;
-      popup.options.autoPanPaddingTopLeft = L.point(16, top);
-      popup.options.autoPanPaddingBottomRight = L.point(16, bottom);
-      popup.options.maxHeight = Math.max(80, height - top - bottom - 32);
-      popup.update();
+    updatePopupLayout() {
+      if (!this.map) return;
+      this.map.setViewport({
+        top: this.isMobile ? this.view.headerBottom : 16,
+        bottom: this.isMobile ? this.sheetHeight + 16 : 16,
+      });
     },
     closeDialogs(exceptId = null) {
       for (const id of Object.keys(DIALOG_ACTIONS)) {
@@ -374,28 +369,30 @@ var app = new Vue({
       return (dt >= this.period.from && dt <= this.period.to);
     },
     showMap() {
-      this.map = L.map('map', {
-        center: [34.66658501665325, 133.91804081661178],
-        zoom: 12,
-        zoomControl: true,
-        minZoom: 0,
-        maxZoom: 18,
-        dragging: true,
-        scrollWheelZoom: 'center',
-        doubleClickZoom: 'center',
-        touchZoom: 'center',
-      });
-      L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://repot-archive.cocolab.jp/#license">repot</a> contributors, <a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a>',
-        maxZoom: 19,
-      }).addTo(this.map);
-      this.map.on('popupopen', ({ popup }) => {
-        this._openPopup = popup;
-        if (this.isMobile && this.sheet.level === 2) this.setSheetLevel(1);
-        this.$nextTick(() => this.updatePopupLayout(popup));
-        this.refreshLazyload();
-      });
-      this.map.on('popupclose', () => { this._openPopup = null; });
+      try {
+        this.map = Object.preventExtensions(new ArchiveMap('map', {
+          onSelect: (slug) => {
+            if (this.isMobile && this.sheet.level === 2) this.setSheetLevel(1);
+            this.showInList(slug);
+          },
+          onPopupOpen: () => {
+            if (this.isMobile && this.sheet.level === 2) this.setSheetLevel(1);
+            this.$nextTick(() => this.updatePopupLayout());
+          },
+          onStatus: (status) => { this.mapStatus = status; },
+        }));
+        this.updatePopupLayout();
+      } catch (error) {
+        this.mapStatus = { loading: false, error: '地図を表示できませんでした。ページを再読み込みするか、WebGL対応のブラウザーでお試しください。' };
+        console.warn('Map initialization:', error);
+      }
+    },
+    retryMap() {
+      if (this.map) this.map.reload();
+      else {
+        this.showMap();
+        if (this.map && this.hashtag.selected) this.putMarkers();
+      }
     },
     setHashtag(hashtag, updateHash = true) {
       if (!Object.keys(this.archives).includes(hashtag)) {
@@ -416,67 +413,22 @@ var app = new Vue({
         if (this.$refs.photoList) this.$refs.photoList.scrollTop = 0;
         if (refocus) this.$refs.datasetTrigger.focus({ preventScroll: true });
         if (this.map) {
-          this.map.invalidateSize();
+          this.map.resize();
         }
       });
     },
     validateLocation(repot) {
-      return Math.abs(repot.location_lat) > 1 || Math.abs(repot.location_lng) > 1;
+      return isValidLocation(repot);
     },
     putMarkers() {
-      if(this.layer != null) {
-        this.map.removeLayer(this.layer);
-      }
-      let tgtArchive = this.archives[this.hashtag.selected];
-      this.layer = L.layerGroup();
-      this.markers = {};
-      for(let i=0; i<tgtArchive.length; i++) {
-        let tgtHashtag = this.hashtag.list[this.hashtag.selected];
-        if(this.validateLocation(tgtArchive[i]) && this.checkPeriod(tgtArchive[i].timestamp)) {
-          // 位置情報が欠損している場合はスキップ
-          let m = L.marker([tgtArchive[i].location_lat, tgtArchive[i].location_lng], {
-                    icon: L.icon({
-                        iconUrl: 'static/img/icon/' + tgtHashtag.icon.name + '.svg',
-                        iconSize: tgtHashtag.icon.size,
-                        iconAnchor: tgtHashtag.icon.anchor,
-                    }),
-                    repotSlug: tgtArchive[i].slug,
-                  }).bindPopup(L.popup({
-                    autoPanPaddingTopLeft: L.point(16, this.isMobile ? this.view.headerBottom : 16),
-                    autoPanPaddingBottomRight: L.point(16, this.isMobile ? this.sheetHeight + 16 : 16),
-                    'content': '<img class="lazyload" src="static/img/loading-photo.png" data-src="' + this.getPhotoURL(tgtArchive[i]) + '">'
-                                + ((tgtArchive[i].caption) != null ? '<p>' + tgtArchive[i].caption + '</p>' : '')
-                                + '<ul>'
-                                    + '<li>' + tgtHashtag.name + '</li>'
-                                    + ((tgtArchive[i].hashtag_names.length > 0) ? '<li>' + tgtArchive[i].hashtag_names.join('</li><li>') + '</li>' : '')
-                                + '</ul>',
-                    'offset': tgtHashtag.icon.popup,
-                  })).on('click', (e) => {
-                    this.showInList(e.target.options.repotSlug);
-                  });
-          this.markers[tgtArchive[i].slug] = m;
-          this.layer.addLayer(m);
-        }
-      }
-      this.map.addLayer(this.layer)
+      this.map.setPosts(this.filteredArchives, this.hashtag.list[this.hashtag.selected], (post) => this.getPhotoURL(post));
     },
     showInMap(repotSlug) {
       this.selectedSlug = repotSlug;
-      if(repotSlug in this.markers) {
+      if (this.map && this.map.hasPost(repotSlug)) {
         if (this.isMobile && this.sheet.level === 2) this.setSheetLevel(1);
-        const marker = this.markers[repotSlug];
-        const position = marker.getLatLng();
-        const animate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (animate && !this.map.getCenter().equals(position)) {
-          this.map.once('moveend', () => {
-            if (this.selectedSlug === repotSlug) marker.openPopup();
-          });
-        }
-        this.map.flyTo(position, this.map.getZoom(), {
-          animate,
-          duration: 1.5
-        });
-        if (!animate || this.map.getCenter().equals(position)) marker.openPopup();
+        this.updatePopupLayout();
+        this.map.focusPost(repotSlug, { animate: !window.matchMedia('(prefers-reduced-motion: reduce)').matches });
         this.showInList(repotSlug);
       }
     },

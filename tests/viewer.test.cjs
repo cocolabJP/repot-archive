@@ -4,8 +4,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+const mapSource = fs.readFileSync(path.join(__dirname, '../docs/static/js/archive-map.js'), 'utf8').replace(/^import[^\n]+\n/gm, '').replace(/^export /gm, '');
 const source = fs.readFileSync(path.join(__dirname, '../docs/static/js/main.js'), 'utf8')
-  .replace(/^import[^\n]+\n/, '');
+  .replace(/^import[^\n]+\n/gm, '');
 
 function viewer(options = {}) {
   const eventTarget = () => {
@@ -70,11 +71,11 @@ function viewer(options = {}) {
   ];
   let app;
   let destroy;
-  vm.runInNewContext(source, {
+  vm.runInNewContext(mapSource + '\n' + source, {
     HASHTAG_LIST: { fish: { name: '魚' }, jelly: { name: 'クラゲ' }, empty: { name: '空' } },
     ARCHIVES: { fish: posts, jelly: posts.slice(0, 1), empty: [] },
     window: win, document: doc, URLSearchParams,
-    setTimeout: (fn) => fn(), L: { point: (x, y) => ({ x, y }) },
+    setTimeout: (fn) => fn(),
     Vue: function(options) {
       app = options.data;
       for (const [name, fn] of Object.entries(options.methods)) app[name] = fn.bind(app);
@@ -191,8 +192,8 @@ test('写真の選択でシートを戻し、地図の写真と一覧の対象�
   const { app, list } = viewer();
   let opened = 0;
   let flown = false;
-  app.map = { getCenter: () => ({ equals: () => false }), getZoom: () => 12, flyTo() { flown = true; } };
-  app.markers.new = { getLatLng: () => ({ lat: 34, lng: 133 }), openPopup() { opened++; } };
+  app.map = { hasPost: (slug) => slug === 'new', setViewport() {},
+    focusPost(slug, options) { assert.equal(slug, 'new'); assert.equal(options.animate, false); flown = true; opened++; } };
   app.sheet.level = 2;
   app.showInMap('new');
   assert.equal(app.sheet.level, 1);
@@ -229,7 +230,7 @@ test('従来のハッシュ・クエリ指定・ライセンスURLを維持す�
   win.location.hash = '#license';
   app.checkHash();
   assert.equal(elements.license.open, true);
-  app.map = { invalidateSize() {} };
+  app.map = { resize() {}, setViewport() {} };
   app.putMarkers = () => {};
   win.location.hash = '#jelly';
   app.checkHash();
@@ -312,7 +313,7 @@ test('ハッシュの変更でダイアログを閉じ、遅れて届くcloseイ
   assert.equal(elements.about.open, false);
   assert.equal(elements.developer.open, true);
   assert.equal(win.location.hash, '#developer');
-  app.map = { invalidateSize() {} };
+  app.map = { resize() {}, setViewport() {} };
   app.putMarkers = () => {};
   win.location.hash = '#jelly';
   app.checkHash();
@@ -358,7 +359,7 @@ test('同じダイアログをすぐ開き直しても、前回のcloseイベン
 test('1200pxを境にPCとスマホを切り替え、データ・期間・地図インスタンスを保つ', () => {
   const { app, win } = viewer();
   const positions = [];
-  const map = { invalidateSize() {}, attributionControl: { setPosition(value) { positions.push(value); } } };
+  const map = { resize() {}, setViewport(value) { positions.push(value); } };
   app.setHashtag('fish');
   app.setPeriodYear(2025);
   app.selectedSlug = 'summer';
@@ -380,7 +381,10 @@ test('1200pxを境にPCとスマホを切り替え、データ・期間・地図
   win.innerWidth = 393;
   app.updateScreenSize();
   assert.equal(app.isMobile, true);
-  assert.deepEqual(positions, ['bottomleft', 'bottomright', 'bottomleft']);
+  assert.equal(positions.length, 3);
+  assert.equal(positions[0].bottom, app.sheetHeight + 16);
+  assert.equal(positions[1].bottom, 16);
+  assert.equal(positions[2].bottom, app.sheetHeight + 16);
   assert.equal(app.displayCount, 2);
 });
 
@@ -406,17 +410,16 @@ test('PCの境界線をドラッグして左右の幅を調整でき、スマホ
 
 test('PCのポップアップにスマホのボトムシート用余白を適用しない', () => {
   const { app, win } = viewer();
-  const popup = { options: {}, isOpen: () => true, update() {} };
-  app.map = { invalidateSize() {}, getSize: () => ({ y: 700 }) };
+  let padding;
+  app.map = { resize() {}, setViewport(value) { padding = value; } };
   win.innerWidth = 1400;
   app.updateScreenSize();
-  app.updatePopupLayout(popup);
-  assert.equal(popup.options.autoPanPaddingBottomRight.y, 16);
-  assert.equal(popup.options.maxHeight, 636);
+  assert.equal(padding.bottom, 16);
+  assert.equal(padding.top, 16);
   win.innerWidth = 393;
   app.updateScreenSize();
-  app.updatePopupLayout(popup);
-  assert.equal(popup.options.autoPanPaddingBottomRight.y, app.sheetHeight + 16);
+  assert.equal(padding.bottom, app.sheetHeight + 16);
+  assert.equal(padding.top, app.view.headerBottom);
 });
 
 test('iPhoneのURLバーで隠れた領域を除き、CSSとシートで同じ表示領域を使う', () => {

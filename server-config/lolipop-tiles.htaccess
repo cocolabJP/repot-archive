@@ -1,0 +1,32 @@
+# Public configuration example; do not add credentials or private keys.
+# Upload this file as .htaccess beside japan.pmtiles (and japan.json if retained).
+# Enable HTTPS for tiles.yukimat.jp in the Lolipop control panel first.
+
+# Public map files: CORS headers also apply to 206 and OPTIONS responses.
+<FilesMatch "^japan\.(json|pmtiles)$">
+    Header unset Access-Control-Allow-Origin
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, HEAD, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Range, If-Match"
+    Header always set Access-Control-Expose-Headers "Accept-Ranges, Content-Range, Content-Length, ETag"
+</FilesMatch>
+
+<Files "japan.json">
+    ForceType application/json
+</Files>
+<Files "japan.pmtiles">
+    ForceType application/octet-stream
+</Files>
+
+# Preserve byte positions for HTTP Range requests. Do not fake Accept-Ranges.
+SetEnvIfNoCase Request_URI "(^|/)japan\.pmtiles$" no-gzip=1
+
+RewriteEngine On
+
+# Answer preflight requests for these two files only.
+RewriteCond %{REQUEST_METHOD} =OPTIONS
+RewriteRule ^japan\.(json|pmtiles)$ - [R=204,L]
+
+# Optional: uncomment BOTH lines only after HTTPS is working.
+# RewriteCond %{HTTPS} !=on
+# RewriteRule ^(japan\.(json|pmtiles))$ https://tiles.yukimat.jp/$1 [R=301,L]

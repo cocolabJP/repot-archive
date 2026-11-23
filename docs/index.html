@@ -8,13 +8,10 @@
 <link rel="icon" type="image/png" href="static/img/archives-logo.png">
 <!-- Reset CSS -->
 <link rel="stylesheet" href="https://unpkg.com/modern-css-reset/dist/reset.min.css" />
-<!-- Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<!-- Leaflet.MarkerCluster -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<!-- MapLibre GL JS / PMTiles（配布元のサンプルと同じ固定バージョン） -->
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/pmtiles@4.4.1/dist/pmtiles.js"></script>
 <!-- Lazyload -->
 <script src="https://cdn.jsdelivr.net/npm/lazyload@2.0.0-rc.2/lazyload.js"></script>
 <!-- Google Fonts -->
@@ -22,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-<link rel="stylesheet" href="static/css/style.css?v=5.4">
+<link rel="stylesheet" href="static/css/style.css?v=7.0">
 </head>
 <body>
 <div id="app" v-cloak :class="{'sheet-dragging': sheet.dragging, 'divider-dragging': view.isDragging}"
@@ -60,7 +57,13 @@
     </div>
   </div>
 <div class="view-container" ref="viewContainer">
-<main id="map" class="viewer-map" :style="{width: isMobile ? '100%' : mapWidth}" aria-label="投稿写真の地図"></main>
+<div class="viewer-map" :style="{width: isMobile ? '100%' : mapWidth}">
+  <main id="map" aria-label="投稿写真の地図。写真一覧からも地点を選べます。"></main>
+  <div class="map-status" v-if="mapStatus.loading || mapStatus.error" :class="{'has-error': mapStatus.error}" role="status" aria-live="polite">
+    <span>${ mapStatus.error || '地図を読み込み中…' }</span>
+    <button type="button" v-if="mapStatus.error" @click="retryMap">再試行</button>
+  </div>
+</div>
 <header class="viewer-header" v-show="isMobile">
   <h1 class="brand" ref="brand">
     <a href="./" aria-label="レポっとアーカイブのトップ">
@@ -315,8 +318,9 @@
       <h2>使用しているライブラリ</h2>
       <ul>
         <li><a href="https://www.openstreetmap.org/">OpenStreetMap</a></li>
-        <li><a href="https://leafletjs.com/" target="_blank">Leaflet.js</a></li>
-        <li><a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a></li>
+        <li><a href="https://maplibre.org/" target="_blank" rel="noopener">MapLibre GL JS</a></li>
+        <li><a href="https://docs.protomaps.com/pmtiles/" target="_blank" rel="noopener">PMTiles</a></li>
+        <li><a href="https://armd-01.sakura.ne.jp/tiles/" target="_blank" rel="noopener">Japan PMTiles（地図データ配布元）</a></li>
       </ul>
     </div>
   </article>
@@ -397,6 +401,6 @@ console.log(items);</code></pre>
 </dialog>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.min.js"></script>
-<script type="module" src="static/js/main.js?v=5.6" charset="UTF-8"></script>
+<script type="module" src="static/js/main.js?v=7.0" charset="UTF-8"></script>
 </body>
 </html>
