@@ -3,8 +3,11 @@ import json
 import urllib.request
 import shutil
 import logging
+import tempfile
+import time
+from contextlib import contextmanager
 from pathlib import Path
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageOps
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 ### v1 データ（変換済み）と v2 データを統合した、アーカイブ生成コード（高速化版）
@@ -54,11 +57,13 @@ def ensure_dirs():
         d.mkdir(parents=True, exist_ok=True)
 
 
-def clear_old_archive_files():
+def clear_old_archive_files(keep_slugs):
     for p in DOCS_ARCHIVES_DIR.glob("*.js"):
-        p.unlink()
+        if p.stem not in keep_slugs:
+            p.unlink()
     for p in DOCS_ARCHIVES_JSON_DIR.glob("*.json"):
-        p.unlink()
+        if p.stem not in keep_slugs:
+            p.unlink()
 
 
 def is_target_period(filename: str) -> bool:
@@ -67,25 +72,87 @@ def is_target_period(filename: str) -> bool:
     return TARGET_PERIOD_FROM < d < TARGET_PERIOD_TO
 
 
-def download_file(url: str, dest_path: Path, overwrite: bool = False, timeout: int = 30):
-    if dest_path.exists() and not overwrite:
-        return
+class ImageReadError(RuntimeError):
+    """未取得・破損などにより元画像を読み込めない。"""
 
+
+@contextmanager
+def staged_file(destination: Path):
+    """同じディレクトリに一時出力し、呼び出し側が成功時だけreplaceする。"""
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(prefix=f".{destination.stem}-", suffix=destination.suffix,
+                                     dir=destination.parent, delete=False) as handle:
+        temporary = Path(handle.name)
     try:
-        req = urllib.request.Request(
-            url,
-            headers={"User-Agent": "Mozilla/5.0"}
-        )
-        with urllib.request.urlopen(req, timeout=timeout) as response, open(dest_path, "wb") as f:
-            shutil.copyfileobj(response, f)
-    except Exception as e:
-        raise RuntimeError(f"download failed: {url} -> {dest_path} ({e})")
+        temporary.chmod(destination.stat().st_mode & 0o777 if destination.exists() else 0o644)
+        yield temporary
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+@contextmanager
+def decoded_image(path: Path):
+    image = None
+    try:
+        image = Image.open(path)
+        image.load()  # JPEGのヘッダーだけでなく、画素の末尾まで検証する。
+    except Exception as error:
+        if image is not None:
+            image.close()
+        raise ImageReadError(f"cannot read image: {path.name} ({error})") from error
+    try:
+        yield image
+    finally:
+        image.close()
+
+
+def validate_generated_image(path: Path):
+    try:
+        with decoded_image(path):
+            pass
+    except ImageReadError as error:
+        raise RuntimeError(f"generated image is invalid: {path.name} ({error})") from error
+
+
+def download_file(url: str, dest_path: Path, overwrite: bool = False, timeout: int = 30,
+                  *, validate_image: bool = False, retries: int = 3):
+    if dest_path.exists() and not overwrite:
+        if not validate_image:
+            return
+        try:
+            with decoded_image(dest_path):
+                return
+        except ImageReadError:
+            logging.warning("invalid cached image; download again: %s", dest_path.name)
+
+    for attempt in range(1, retries + 1):
+        try:
+            with staged_file(dest_path) as temporary:
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=timeout) as response, temporary.open("wb") as output:
+                    expected = response.headers.get("Content-Length")
+                    shutil.copyfileobj(response, output)
+                actual = temporary.stat().st_size
+                if expected is not None and actual != int(expected):
+                    raise RuntimeError(f"incomplete download: expected {expected} bytes, received {actual}")
+                if validate_image:
+                    with decoded_image(temporary):
+                        pass
+                temporary.replace(dest_path)
+            return
+        except Exception as error:
+            if attempt == retries:
+                raise RuntimeError(f"download failed: {url} -> {dest_path} ({error})") from error
+            logging.warning("download retry %d/%d: %s (%s)", attempt, retries, dest_path.name, error)
+            time.sleep(1)
 
 
 def copy_if_newer(src: Path, dst_dir: Path) -> Path:
     dst = dst_dir / src.name
     if not dst.exists() or src.stat().st_mtime > dst.stat().st_mtime:
-        shutil.copy2(src, dst)
+        with staged_file(dst) as temporary:
+            shutil.copy2(src, temporary)
+            temporary.replace(dst)
     return dst
 
 
@@ -136,87 +203,76 @@ def compress_photo_external(photo_path: Path):
         logging.warning("external compression error: %s (%s)", photo_path.name, e)
 
 
-def process_photo(photo_path: Path, thumbnail_path: Path):
+def process_photo(photo_path: Path, thumbnail_path: Path, *, source_path: Path = None):
     """
     画像の
     - 拡張子とフォーマットの整合性補正
     - リサイズ
     - サムネイル作成
     - 必要時の外部圧縮
-    を1回のopenでまとめて行う
+    をまとめて行う。読込・保存の失敗は呼び出し側へ通知し、既存の出力は保護する。
     """
-    if not photo_path.exists():
-        logging.warning("photo not found: %s", photo_path)
-        return
-
+    source_path = photo_path if source_path is None else source_path
     ext = photo_path.suffix.lower()
-    size_before = photo_path.stat().st_size
-    need_external_compress = size_before >= COMPRESS_THRESHOLD
-
-    try:
-        with Image.open(photo_path) as img:
-            img.load()
-
-            original_format = (img.format or "").upper()
-            if original_format == "PNG":
-                real_fmt = ".png"
-            elif original_format == "JPEG":
-                real_fmt = ".jpg"
-            else:
-                real_fmt = ext
-
-            # 出力形式はファイル名の拡張子に合わせる。
-            # 例: JPEG実体の *.png はPNGへ変換してからpngquantへ渡す。
-            if ext == ".png":
-                output_fmt = ".png"
-            elif ext in [".jpg", ".jpeg"]:
-                output_fmt = ".jpg"
-            else:
-                output_fmt = real_fmt
-
-            changed = False
-
-            # 拡張子と実体が異なる場合、拡張子が示す形式へ変換
-            if ext != real_fmt:
-                logging.info("format mismatch: %s ext=%s real=%s", photo_path.name, ext, real_fmt)
-                if output_fmt == ".png":
-                    img.save(photo_path, format="PNG", optimize=True)
-                    changed = True
-                elif output_fmt == ".jpg":
-                    img = img.convert("RGB")
-                    img.save(photo_path, format="JPEG", quality=80, optimize=True, progressive=True)
-                    changed = True
-
-            # 再度開き直さずそのままサイズ確認
-            current_size = img.size
-            if current_size[0] > MAX_IMAGE_SIZE[0] or current_size[1] > MAX_IMAGE_SIZE[1]:
-                img.thumbnail(MAX_IMAGE_SIZE)
-                if output_fmt == ".png":
-                    img.save(photo_path, format="PNG", optimize=True)
+    with decoded_image(source_path) as original:
+        output_format = "PNG" if ext == ".png" else "JPEG" if ext in {".jpg", ".jpeg"} else original.format
+        oriented = original.getexif().get(274, 1) != 1
+        img = ImageOps.exif_transpose(original) if oriented else original
+        before_size = img.size
+        img.thumbnail(MAX_IMAGE_SIZE)
+        changed = original.format != output_format or oriented or img.size != before_size
+        if output_format == "JPEG" and img.mode != "RGB":
+            img = img.convert("RGB")
+            changed = True
+        save_options = {"optimize": True} if output_format == "PNG" else {"quality": 80, "optimize": True, "progressive": True}
+        needs_compression = source_path.stat().st_size >= COMPRESS_THRESHOLD or changed
+        rewrite_photo = source_path != photo_path or changed or needs_compression
+        with staged_file(photo_path) as prepared_photo, staged_file(thumbnail_path) as prepared_thumb:
+            if rewrite_photo:
+                if changed:
+                    img.save(prepared_photo, format=output_format, **save_options)
                 else:
-                    img = img.convert("RGB")
-                    img.save(photo_path, format="JPEG", quality=80, optimize=True, progressive=True)
-                changed = True
-                logging.info("resized: %s %s -> %s", photo_path.name, current_size, img.size)
+                    shutil.copy2(source_path, prepared_photo)
+                if needs_compression:
+                    compress_photo_external(prepared_photo)
+                validate_generated_image(prepared_photo)
+            with img.copy() as thumb:
+                thumb.thumbnail(THUMB_SIZE)
+                thumb.save(prepared_thumb, format=output_format, **save_options)
+            validate_generated_image(prepared_thumb)
+            # 両方の生成・検証が終わってから、本来のファイル名へ切り替える。
+            if rewrite_photo:
+                prepared_photo.replace(photo_path)
+            prepared_thumb.replace(thumbnail_path)
+    return True
 
-            # サムネイル作成
-            thumb = img.copy()
-            thumb.thumbnail(THUMB_SIZE)
-            thumbnail_path.parent.mkdir(parents=True, exist_ok=True)
 
-            if output_fmt == ".png":
-                thumb.save(thumbnail_path, format="PNG", optimize=True)
-            else:
-                thumb = thumb.convert("RGB")
-                thumb.save(thumbnail_path, format="JPEG", quality=80, optimize=True, progressive=True)
+def prepare_archive_photo(source_path: Path, *, force: bool = False):
+    photo = ARCHIVE_PHOTO_DIR / source_path.name
+    thumb = ARCHIVE_THUMB_DIR / source_path.name
+    if not source_path.is_file():
+        raise ImageReadError(f"photo not found: {source_path}")
+    newer = not photo.exists() or source_path.stat().st_mtime > photo.stat().st_mtime
+    if force or newer or is_target_period(source_path.name) or not thumb.is_file():
+        process_photo(photo, thumb, source_path=source_path if force or newer else photo)
+    return photo
 
-        if need_external_compress or changed:
-            compress_photo_external(photo_path)
 
-    except UnidentifiedImageError:
-        logging.warning("cannot identify image file: %s", photo_path)
-    except Exception as e:
-        logging.warning("process photo failed: %s (%s)", photo_path, e)
+def prepare_v2_photo(filename: str):
+    source = V2_PHOTO_DIR / filename
+    url = f"{V2_PHOTO_BASE_URL}/{filename}"
+    if not source.is_file():
+        download_file(url, source, validate_image=True)
+    try:
+        return prepare_archive_photo(source)
+    except ImageReadError:
+        # アーカイブだけが壊れている場合は、保存済みの元画像から復旧する。
+        try:
+            return prepare_archive_photo(source, force=True)
+        except ImageReadError:
+            logging.warning("broken source; re-download original: %s", filename)
+            download_file(url, source, overwrite=True, validate_image=True)
+            return prepare_archive_photo(source, force=True)
 
 
 def load_tsv(path: Path):
@@ -259,17 +315,19 @@ def transform_archive_dataframe(df_archive: pd.DataFrame, current_hashtag_name: 
 
 def write_archive_js(slug: str, json_archive: str):
     out_path = DOCS_ARCHIVES_DIR / f"{slug}.js"
-    with open(out_path, "w", encoding="utf-8") as f:
-        f.write(
+    with staged_file(out_path) as temporary:
+        temporary.write_text(
             f"const archive_{slug} = {json_archive};\n"
-            f"export default archive_{slug};"
+            f"export default archive_{slug};", encoding="utf-8"
         )
+        temporary.replace(out_path)
 
 
 def write_archive_json(slug: str, json_archive: str):
     out_path = DOCS_ARCHIVES_JSON_DIR / f"{slug}.json"
-    with open(out_path, "w", encoding="utf-8") as f:
-        f.write(json_archive + "\n")
+    with staged_file(out_path) as temporary:
+        temporary.write_text(json_archive + "\n", encoding="utf-8")
+        temporary.replace(out_path)
 
 
 def predownload_v2_photos(df_v2: pd.DataFrame):
@@ -282,13 +340,14 @@ def predownload_v2_photos(df_v2: pd.DataFrame):
             jobs.append((url, local_path, filename))
 
     if not jobs:
-        return
+        return {}
 
     logging.info("start parallel download: %d photos", len(jobs))
 
+    failures = {}
     with ThreadPoolExecutor(max_workers=DOWNLOAD_WORKERS) as executor:
         future_map = {
-            executor.submit(download_file, url, path): (filename, path)
+            executor.submit(download_file, url, path, validate_image=True): (filename, path)
             for url, path, filename in jobs
         }
 
@@ -297,7 +356,9 @@ def predownload_v2_photos(df_v2: pd.DataFrame):
             try:
                 future.result()
             except Exception as e:
+                failures[filename] = str(e)
                 logging.error("photo download failed: %s (%s)", filename, e)
+    return failures
 
 
 # -----------------------------
@@ -305,7 +366,6 @@ def predownload_v2_photos(df_v2: pd.DataFrame):
 # -----------------------------
 def main():
     ensure_dirs()
-    clear_old_archive_files()
 
     df_hashtags = pd.read_csv(ARCHIVE_LIST_CSV)
     logging.info("loaded archive list: %d rows", len(df_hashtags))
@@ -313,18 +373,23 @@ def main():
     js_import_lines = []
     archive_list_entries = []
     archive_meta = {}
+    failures = {}
 
     for row in df_hashtags.itertuples(index=False):
         logging.info("========== [%s] ==========", row.slug)
 
         df_v1 = None
         df_v2 = None
+        dataset_failed = False
 
         # ------------ v1
         if row.v1 != -1:
             target_tsv = V1_TSV_DIR / f"{row.v1}.tsv"
             logging.info("[v1] load tsv: %s", target_tsv)
             df_v1 = load_tsv(target_tsv)
+            if df_v1 is None:
+                failures[str(target_tsv)] = "TSVを読み込めません。"
+                dataset_failed = True
 
             if df_v1 is not None:
                 total = len(df_v1)
@@ -333,14 +398,17 @@ def main():
                     src_path = V1_PHOTO_DIR / filename
 
                     if not src_path.exists():
-                        logging.warning("[v1] photo not found: %s", src_path)
+                        failures[filename] = f"元画像がありません: {src_path}"
+                        dataset_failed = True
+                        logging.error("[v1] photo not found: %s", src_path)
                         continue
 
-                    archived_path = copy_if_newer(src_path, ARCHIVE_PHOTO_DIR)
-
-                    if is_target_period(filename):
-                        thumb_path = ARCHIVE_THUMB_DIR / filename
-                        process_photo(archived_path, thumb_path)
+                    try:
+                        prepare_archive_photo(src_path)
+                    except Exception as error:
+                        failures[filename] = str(error)
+                        dataset_failed = True
+                        logging.error("[v1] image processing failed: %s (%s)", filename, error)
 
                     if i % 100 == 0 or i == total:
                         logging.info("[v1] %s progress: %d/%d", target_tsv.name, i, total)
@@ -358,9 +426,12 @@ def main():
 
             logging.info("[v2] load tsv: %s", target_tsv)
             df_v2 = load_tsv(target_tsv)
+            if df_v2 is None:
+                failures[str(target_tsv)] = "TSVを読み込めません。"
+                dataset_failed = True
 
             if df_v2 is not None:
-                predownload_v2_photos(df_v2)
+                download_failures = predownload_v2_photos(df_v2)
 
                 total = len(df_v2)
                 for i, df_row in enumerate(df_v2.itertuples(index=False), 1):
@@ -368,17 +439,24 @@ def main():
                     src_path = V2_PHOTO_DIR / filename
 
                     if not src_path.exists():
-                        logging.warning("[v2] photo not found after download: %s", src_path)
+                        failures[filename] = download_failures.get(filename, f"元画像がありません: {src_path}")
+                        dataset_failed = True
+                        logging.error("[v2] photo not found after download: %s", src_path)
                         continue
 
-                    archived_path = copy_if_newer(src_path, ARCHIVE_PHOTO_DIR)
-
-                    if is_target_period(filename):
-                        thumb_path = ARCHIVE_THUMB_DIR / filename
-                        process_photo(archived_path, thumb_path)
+                    try:
+                        prepare_v2_photo(filename)
+                    except Exception as error:
+                        failures[filename] = str(error)
+                        dataset_failed = True
+                        logging.error("[v2] image processing failed: %s (%s)", filename, error)
 
                     if i % 100 == 0 or i == total:
                         logging.info("[v2] %s progress: %d/%d", target_tsv.name, i, total)
+
+        if dataset_failed:
+            logging.error("[%s] 出力を更新しません。画像・TSVのエラーを確認してください。", row.slug)
+            continue
 
         # ------------ concat v1 and v2
         df_archive = concat_existing_dfs(df_v1, df_v2)
@@ -405,9 +483,15 @@ def main():
 
         logging.info("done: %s", row.slug)
 
-    # 統合JS出力
-    with open(DOCS_ARCHIVES_JS, "w", encoding="utf-8") as f:
-        f.write(
+    if failures:
+        logging.error("アーカイブ生成に失敗しました（%d件）。既存の一覧と未更新データは保持します。", len(failures))
+        for filename, error in sorted(failures.items()):
+            logging.error("FAILED %s: %s", filename, error)
+        return 1
+
+    # 統合JSは全データセットの処理が成功したときだけ切り替える。
+    with staged_file(DOCS_ARCHIVES_JS) as temporary:
+        temporary.write_text(
             "\n".join(js_import_lines) + "\n"
             + "export const HASHTAG_LIST = "
             + json.dumps(archive_meta, ensure_ascii=False)
@@ -415,11 +499,15 @@ def main():
             + "export default HASHTAG_LIST;\n"
             + "export const ARCHIVES = {"
             + ",".join(archive_list_entries)
-            + "};"
+            + "};", encoding="utf-8"
         )
+        temporary.replace(DOCS_ARCHIVES_JS)
+
+    clear_old_archive_files(archive_meta)
 
     logging.info("all done.")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
