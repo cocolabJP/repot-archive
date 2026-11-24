@@ -1,4 +1,5 @@
 import contextlib
+from dataclasses import replace
 import ftplib
 import importlib.util
 import io
@@ -213,6 +214,46 @@ class UploadTests(unittest.TestCase):
         self.assertEqual(ftp.directories["/repot-archive/thumb"][self.thumb.name], self.thumb.read_bytes())
         self.assertEqual(sum(event[0] == "stor" for event in ftp.events), 2)
         self.assertFalse(any(name.endswith(".tmp") for files in ftp.directories.values() for name in files))
+
+    def test_send_uses_configured_public_directories_instead_of_old_nested_directories(self):
+        ftp = FakeFTP()
+        for directory in ("/public", "/public/repot", "/public/repot-thumb",
+                          "/public/repot/photo", "/public/repot/thumb"):
+            ftp.directories[directory] = {}
+        # 旧配置に同名ファイルがあっても、公開先へのアップロードをスキップしない。
+        ftp.directories["/public/repot/photo"][self.photo.name] = b"wrong photo destination"
+        ftp.directories["/public/repot/thumb"][self.thumb.name] = b"wrong thumb destination"
+        env = self.root / "ftp.env"
+        env.write_text("FTP_HOST=ftp.example.test\nFTP_USER=test-user\nFTP_PASSWORD=test-secret\n"
+                       "FTP_REMOTE_DIR=/public\nFTP_PHOTO_DIR=repot\nFTP_THUMB_DIR=repot-thumb\n", encoding="utf8")
+        with patch.object(upload, "DATA_DIR", self.root), patch.dict("os.environ", {}, clear=True), \
+                patch.object(ftplib, "FTP_TLS", return_value=ftp), \
+                contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(upload.main(["--env-file", str(env), "--send"]), 0)
+        self.assertEqual(ftp.directories["/public/repot"][self.photo.name], self.photo.read_bytes())
+        self.assertEqual(ftp.directories["/public/repot-thumb"][self.thumb.name], self.thumb.read_bytes())
+        self.assertEqual(ftp.directories["/public/repot/thumb"][self.thumb.name], b"wrong thumb destination")
+        self.assertIn("archive_thumb → /public/repot-thumb/", output.getvalue())
+        self.assertIn("送信 2 件", output.getvalue())
+        config = upload.load_config(env_file=env, environ={})
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(upload.upload_batches(ftp, upload.collect_files(["*.png"], self.root), config), (0, 2))
+
+    def test_absolute_destination_and_custom_directory_creation(self):
+        ftp = FakeFTP()
+        ftp.directories["/other"] = {}
+        config = replace(self.config, thumb_dir="/other/previews")
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(upload.upload_batches(ftp, upload.collect_files(["*.png"], self.root), config), (2, 0))
+        self.assertEqual(ftp.directories["/other/previews"][self.thumb.name], self.thumb.read_bytes())
+        self.assertEqual(ftp.directories["/repot-archive/thumb"], {})
+
+    def test_photo_and_thumbnail_destinations_must_be_distinct(self):
+        for options in ({"FTP_PHOTO_DIR": ""}, {"FTP_THUMB_DIR": "https://example.test/thumb"},
+                        {"FTP_PHOTO_DIR": "photo", "FTP_THUMB_DIR": "other/../photo"}):
+            with self.subTest(options=options), patch.object(upload, "DATA_DIR", self.root):
+                with self.assertRaises(ValueError):
+                    upload.load_config(environ=options)
 
     def test_incomplete_transfer_or_bad_size_never_publishes_the_final_name(self):
         for reason in ("fail_transfer", "bad_size"):

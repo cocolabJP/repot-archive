@@ -89,9 +89,6 @@ export class ArchiveMap {
     this.map.touchZoomRotate.disableRotation();
     this.map.keyboard.disableRotation();
     this.map.addControl(new library.NavigationControl({ showCompass: false }), 'top-left');
-    this.map.addControl(new library.AttributionControl({ compact: false,
-      customAttribution: '<a href="https://repot-archive.cocolab.jp/#license">repot</a> contributors',
-    }), 'bottom-right');
     this.map.on('style.load', () => { this.styleLoaded = true; this.styleVersion++; this.renderPosts(); });
     this.map.on('click', (event) => {
       if (!this.map.getLayer(POST_LAYER)) return;

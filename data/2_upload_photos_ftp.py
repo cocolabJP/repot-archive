@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""archive_photo / archive_thumb の未登録画像を FTP / 明示的 FTPS で送る。"""
+"""archive_photo / archive_thumb の未登録画像を FTP / 明示的 FTPS で送る。
+
+設定と画像はスクリプトの位置を基準に読み、data/ 内からも実行できる。
+"""
 
 import argparse
 import configparser
@@ -30,6 +33,8 @@ class Config:
     protocol: str = "ftps"
     port: int = 21
     timeout: int = 60
+    photo_dir: str = "photo"
+    thumb_dir: str = "thumb"
 
 
 def read_env_file(filename):
@@ -74,7 +79,7 @@ def read_env_file(filename):
 
 def normalize_env_values(values, protocol):
     result = {}
-    for key in ("host", "user", "password", "remote_dir", "protocol", "port", "timeout"):
+    for key in ("host", "user", "password", "remote_dir", "protocol", "port", "timeout", "photo_dir", "thumb_dir"):
         name = f"FTP_{key.upper()}"
         if name in values:
             result[key] = values[name]
@@ -124,7 +129,7 @@ def load_config(config_path=None, environ=None, env_file=None):
         values.update(normalize_env_values(layer, protocol))
     defaults = Config()
     options = {}
-    for key in ("host", "user", "password", "remote_dir", "protocol", "port", "timeout"):
+    for key in ("host", "user", "password", "remote_dir", "protocol", "port", "timeout", "photo_dir", "thumb_dir"):
         value = values.get(key, getattr(defaults, key))
         if key in {"port", "timeout"}:
             try:
@@ -144,7 +149,18 @@ def load_config(config_path=None, environ=None, env_file=None):
         raise ValueError("FTP_PORT は 1〜65535、FTP_TIMEOUT は正の秒数を指定してください。")
     if not config.remote_dir or "://" in config.host:
         raise ValueError("ホスト名には URL を使わず、FTP_REMOTE_DIR には送信先ディレクトリを指定してください。")
+    for key in ("photo_dir", "thumb_dir"):
+        if not getattr(config, key) or "://" in getattr(config, key):
+            raise ValueError(f"FTP_{key.upper()} には送信先ディレクトリを指定してください。")
+    if remote_destination(config, "photo") == remote_destination(config, "thumb"):
+        raise ValueError("写真とサムネイルには別の送信先ディレクトリを指定してください。")
     return config
+
+
+def remote_destination(config, name, base_dir=None):
+    """写真・サムネイルそれぞれの相対パス、または絶対パスを解決する。"""
+    base = config.remote_dir if base_dir is None else base_dir
+    return posixpath.normpath(posixpath.join(base, getattr(config, f"{name}_dir")))
 
 
 def collect_files(patterns, data_dir=None):
@@ -241,14 +257,16 @@ def upload_batches(ftp, batches, config, verbose=False):
     for name, files in batches.items():
         if not files:
             continue
+        directory = remote_destination(config, name, base_dir)
+        print(f"送信先を確認: {directory}", flush=True)
         ftp.cwd(base_dir)
         try:
-            ftp.cwd(name)
+            ftp.cwd(directory)
         except ftplib.error_perm as error:
             if not str(error).startswith("550"):
                 raise
-            ftp.mkd(name)
-            ftp.cwd(name)
+            ftp.mkd(directory)
+            ftp.cwd(directory)
         destinations[name] = (ftp.pwd(), remote_names(ftp))
 
     uploaded = skipped = 0
@@ -274,7 +292,10 @@ def upload_batches(ftp, batches, config, verbose=False):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        epilog="data/ 内での実行例: python3 %(prog)s --dry-run（実際に送信する場合は --send）",
+    )
     parser.add_argument("--pattern", action="append", help="対象ファイル名。複数指定可。既定値: 20*.png")
     parser.add_argument("--config", type=Path, help="接続設定 INI。省略時: このスクリプトと同じ場所の ftp_upload.ini")
     parser.add_argument("--env-file", type=Path, help="接続情報の .env。省略時はリポジトリ直下と data/.env を自動検出")
@@ -294,7 +315,7 @@ def main(argv=None):
         print("SEND" if args.send else "DRY RUN（接続・アップロードなし）")
         print(f"送信先: {config.protocol}://{config.host or '(FTP_HOST 未設定)'}:{config.port}{config.remote_dir}")
         for name, files in batches.items():
-            print(f"{SOURCES[name]} → {name}/: {len(files)} 件")
+            print(f"{SOURCES[name]} → {remote_destination(config, name)}/: {len(files)} 件")
         print(f"合計 {count} 件 / {size / 1024 / 1024:.2f} MiB")
         if not args.send:
             for name, files in batches.items():
@@ -313,7 +334,9 @@ def main(argv=None):
             config = replace(config, password=getpass.getpass("FTP パスワード: "))
             if not config.password:
                 raise ValueError("FTP パスワードが空です。")
+        print("FTPサーバーに接続しています…", flush=True)
         with ftp_session(config) as ftp:
+            print("接続しました。公開先の既存ファイルを確認します。", flush=True)
             upload_batches(ftp, batches, config, args.verbose)
         return 0
     except KeyboardInterrupt:

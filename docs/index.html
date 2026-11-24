@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-<link rel="stylesheet" href="static/css/style.css?v=7.3">
+<link rel="stylesheet" href="static/css/style.css?v=7.6">
 </head>
 <body>
 <div id="app" v-cloak :class="{'sheet-dragging': sheet.dragging, 'divider-dragging': view.isDragging}"
@@ -57,8 +57,14 @@
     </div>
   </div>
 <div class="view-container" ref="viewContainer">
-<div class="viewer-map" :style="{width: isMobile ? '100%' : mapWidth}">
+<div class="viewer-map" :style="{width: isMobile ? '100%' : mapWidth}"
+     :class="{'map-info-hidden': isMobile && view.wh - sheetHeight - view.headerBottom < 30}">
   <main id="map" aria-label="投稿写真の地図。写真一覧からも地点を選べます。"></main>
+  <button type="button" class="map-about-trigger" @click.stop="showAboutDialog"
+          aria-label="このシステムについて・地図データの権利表示" title="このシステムについて・地図データの権利表示"
+          aria-haspopup="dialog" aria-controls="about">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v.1"/></svg>
+  </button>
   <div class="map-status" v-if="mapStatus.loading || mapStatus.error" :class="{'has-error': mapStatus.error}" role="status" aria-live="polite">
     <span>${ mapStatus.error || '地図を読み込み中…' }</span>
     <button type="button" v-if="mapStatus.error" @click="retryMap">再試行</button>
@@ -92,11 +98,11 @@
     </div>
   </nav>
   <div class="info-menu" ref="infoMenu">
-    <button type="button" class="info-trigger" ref="infoTrigger" aria-label="ページ情報を開く"
+    <button type="button" class="info-trigger" ref="infoTrigger" aria-label="メニューを開く"
             :aria-expanded="String(menus.info)" aria-controls="page-information" @click="toggleInfoMenu">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v.1"/></svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
-    <nav id="page-information" class="info-panel" v-show="menus.info" aria-label="ページ情報">
+    <nav id="page-information" class="info-panel" v-show="menus.info" aria-label="メニュー">
       <ul>
         <li><button type="button" @click="showAboutDialog">このシステムについて</button></li>
         <li><button type="button" @click="showLicenseDialog()">データの利用について</button></li>
@@ -315,12 +321,20 @@
       <p>
         レポっとアーカイブは、市民参加型位置情報付き写真収集プラットフォーム「<a href="https://www.iopt.jp/repot">レポっと</a>」によって収集されたデータを一般公開するデジタルアーカイブです。
       </p>
+      <h2>背景地図のデータ</h2>
+      <p>背景地図はOpenStreetMapの地図データをもとに、写真や投稿地点が見やすい配色で表示しています。</p>
+      <h3>日本の詳細地図</h3>
+      <p><a href="https://armd-01.sakura.ne.jp/tiles/" target="_blank" rel="noopener">Japan PMTiles</a>で配布されている日本の地図データを利用し、レポっとアーカイブの地図配信サーバーから配信しています。</p>
+      <h3>国外・広域表示</h3>
+      <p>国外や広い範囲を表示するときは、<a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a>の世界地図を利用します。日本の地図に収録されていない地域も、この世界地図で補います。</p>
+      <h3>地図の権利表示・ライセンス</h3>
+      <p><a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a> · &copy; <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> · Data from &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a></p>
+      <p>地図データはOpen Database License（ODbL）に基づき提供されています。詳しくは<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMapの著作権・ライセンス情報</a>を参照してください。</p>
+      <p>写真・投稿データの利用条件は、<a href="#license" @click.prevent="showLicenseDialog()">データの利用について（&copy; repot contributors）</a>で確認できます。</p>
       <h2>使用しているライブラリ</h2>
       <ul>
-        <li><a href="https://www.openstreetmap.org/">OpenStreetMap</a></li>
         <li><a href="https://maplibre.org/" target="_blank" rel="noopener">MapLibre GL JS</a></li>
         <li><a href="https://docs.protomaps.com/pmtiles/" target="_blank" rel="noopener">PMTiles</a></li>
-        <li><a href="https://armd-01.sakura.ne.jp/tiles/" target="_blank" rel="noopener">Japan PMTiles（地図データ配布元）</a></li>
       </ul>
     </div>
   </article>
@@ -401,6 +415,6 @@ console.log(items);</code></pre>
 </dialog>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.min.js"></script>
-<script type="module" src="static/js/main.js?v=7.0" charset="UTF-8"></script>
+<script type="module" src="static/js/main.js?v=7.5" charset="UTF-8"></script>
 </body>
 </html>

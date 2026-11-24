@@ -432,11 +432,10 @@ test('iPhoneのURLバーで隠れた領域を除き、CSSとシートで同じ�
   assert.equal(app.viewerStyle['--viewport-width'], '430px');
   assert.equal(app.viewerStyle['--viewport-top'], '110px');
   assert.equal(app.viewerStyle['--viewport-bottom-gap'], '132px');
-  const attributionBaseline = app.viewerStyle['--initial-sheet-height'];
   for (const level of [0, 1, 2]) {
     app.setSheetLevel(level);
     assert.ok(app.sheetHeight <= 690 - app.view.headerBottom);
-    assert.equal(app.viewerStyle['--initial-sheet-height'], attributionBaseline);
+    assert.equal(app.viewerStyle['--sheet-height'], app.sheetHeight + 'px');
   }
 });
 

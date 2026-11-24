@@ -1,5 +1,5 @@
 import { HASHTAG_LIST, ARCHIVES } from "../../data/archives.js"
-import { ArchiveMap, isValidLocation } from "./archive-map.js?v=6.6"
+import { ArchiveMap, isValidLocation } from "./archive-map.js?v=7.5"
 var PHOTO_URL_BASE = 'https://data.cocolab.jp/repot-thumb/'
 const DESKTOP_MIN_WIDTH = 1200;
 const DIALOG_ACTIONS = {
@@ -468,7 +468,6 @@ var app = new Vue({
     viewerStyle: function() {
       const style = {
         '--sheet-height': (this.isMobile ? this.sheetHeight : 0) + 'px',
-        '--initial-sheet-height': (this.isMobile ? this.sheetStops[1] : 0) + 'px',
         '--header-bottom': this.view.headerBottom + 'px',
         '--viewport-top': this.view.top + 'px',
         '--viewport-left': this.view.left + 'px',
